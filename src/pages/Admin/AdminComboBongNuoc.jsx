@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../service/api";
+import toast from "react-hot-toast";
 
 const AdminComboBongNuoc = () => {
   const [comboBongNuoc, setComboBongNuoc] = useState([]);
@@ -22,7 +23,7 @@ const AdminComboBongNuoc = () => {
     e.preventDefault();
     try {
       await api.post(`/admin/combo-bongnuoc/create`, form);
-      alert("Thêm Combo Thành Công");
+      toast.success("Thêm Combo Thành Công");
       fetchComboBongNuoc();
       setForm({ name: "", description: "", price: "" });
     } catch (error) {
@@ -34,7 +35,7 @@ const AdminComboBongNuoc = () => {
     if (window.confirm("Bác có chắc muốn xóa Combo này không?")) {
       try {
         await api.delete(`admin/combo-bongnuoc/delete/${id}`);
-        alert("Xóa Combo thành công");
+        toast.success("Xóa Combo thành công");
         fetchComboBongNuoc();
       } catch (error) {
         console.error(error);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../service/api";
+import toast from "react-hot-toast";
 
 const AdminCinemaPage = () => {
   const [form, setForm] = useState({ name: "", location: "" });
@@ -23,7 +24,7 @@ const AdminCinemaPage = () => {
     e.preventDefault();
     try {
       await api.post(`/admin/cinemas/create`, form);
-      alert("tạo rạp thành công");
+      toast.success("tạo rạp thành công");
       setForm({
         name: "",
         location: "",
@@ -39,7 +40,7 @@ const AdminCinemaPage = () => {
     if (window.confirm("Bác có chắc muốn xóa Cinema này không?")) {
       try {
         await api.delete(`admin/cinemas/delete/${id}`);
-        alert("Xóa Cinema thành công");
+        toast.success("Xóa Cinema thành công");
         fetchCinemas();
       } catch (error) {
         console.error(error);

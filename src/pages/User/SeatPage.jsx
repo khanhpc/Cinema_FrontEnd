@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../service/api";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const SeatPage = () => {
   const navigate = useNavigate();
@@ -12,26 +13,26 @@ const SeatPage = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
 
   useEffect(() => {
-    
+
     fetchSeats();
   }, [showtimeId, roomId, navigate]);
 
   const fetchSeats = async () => {
-      try {
-        const response = await api.get(
-          `/user/seats/showtime/${showtimeId}/room/${roomId}`,
-        );
+    try {
+      const response = await api.get(
+        `/user/seats/showtime/${showtimeId}/room/${roomId}`,
+      );
 
-        const showtimeResponse = await api.get(`/public/showtimes/${showtimeId}`);
-        setPrice(showtimeResponse.data.price);
-        setSeats(response.data);
-      } catch (error) {
-        console.error("Lỗi lấy ghế:", error);
-        toast.error("Vui Lòng Đăng Nhập Để Đặt Vé!")
-        navigate(`/login`);
-      }
-    };
- 
+      const showtimeResponse = await api.get(`/public/showtimes/${showtimeId}`);
+      setPrice(showtimeResponse.data.price);
+      setSeats(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy ghế:", error);
+      toast.error("Vui Lòng Đăng Nhập Để Đặt Vé!")
+      navigate(`/login`);
+    }
+  };
+
   const handleSelectSeat = (seat) => {
     if (seat.booked) return;
 
@@ -41,7 +42,13 @@ const SeatPage = () => {
       setSelectedSeats(selectedSeats.filter((s) => s.id !== seat.id));
     } else {
       if (selectedSeats.length >= 6) {
-        alert("Bác ơi, mỗi lần chỉ đặt được tối đa 6 ghế thôi nhé!");
+        Swal.fire({
+          title: 'Bác ơi!',
+          text: "Mỗi lần chỉ đặt được tối đa 6 ghế thôi nhé!",
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK',
+        })
         return;
       }
       setSelectedSeats([...selectedSeats, seat]);
@@ -60,8 +67,7 @@ const SeatPage = () => {
 
       const response = await api.post(`/user/bookings/create`, bookingRequest);
 
-      alert(`Đặt vé thành công! Bác có ${selectedSeats.length} ghế mới.`);
-      // Sau khi đặt xong thì chuyển sang trang cá nhân xem vé cho "nuột"
+      toast.success(`Bác có ${selectedSeats.length} ghế mới. Vui lòng thanh toán chúng`);
       navigate("/profile");
     } catch (error) {
       console.error("Lỗi đặt vé:", error);

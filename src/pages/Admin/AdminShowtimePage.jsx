@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../service/api";
+import toast from "react-hot-toast";
 
 const AdminShowtimePage = () => {
   const [movies, setMovies] = useState([]);
@@ -25,7 +26,7 @@ const AdminShowtimePage = () => {
     e.preventDefault();
     try {
       await api.post("/admin/showtimes/create", form);
-      alert("Lên lịch thành công!");
+      toast.success("Lên lịch thành công!");
 
       setForm({ movieId: "", roomId: "", startTime: "", price: "" });
 

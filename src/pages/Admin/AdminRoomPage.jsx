@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../service/api";
 import { data } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const AdminRoomPage = () => {
   const [rooms, setRooms] = useState([]);
@@ -63,7 +64,13 @@ const AdminRoomPage = () => {
 
       await api.post(`/admin/seats/generate`, seatPayload);
 
-      alert("Tạo phòng và cấu hình sơ đồ ghế thành công!");
+      Swal.fire({
+              title: 'Success',
+              text: "Tạo phòng và cấu hình sơ đồ ghế thành công!",
+              icon: 'success',
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'OK',
+            })
       setForm({ name: "", cinemaId: "", rows: "", perRow: "" });
       fetchRooms();
     } catch (error) {

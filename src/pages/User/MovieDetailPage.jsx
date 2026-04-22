@@ -36,7 +36,6 @@ const MovieDetailPage = () => {
           <div className="w-full max-w-4xl aspect-video rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.15)] border border-white/5 bg-black">
             <iframe
               className="w-full h-full"
-              // Cháu bỏ mute=1 để có tiếng, thêm rel=0 để không hiện video gợi ý cuối phim
               src={`https://www.youtube.com/embed/${movie.trailerUrl}?autoplay=1&rel=0&modestbranding=1`}
               title={movie.title}
               frameBorder="0"

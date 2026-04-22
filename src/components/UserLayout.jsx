@@ -10,7 +10,7 @@ const UserLayout = () => {
   const handleLogout = () => {
     Swal.fire({
       title: 'Xác nhận đăng xuất',
-      text: "Bạn có chắc muốn đăng xuất không?",
+      text: "Bác có chắc muốn đăng xuất không?",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -25,7 +25,7 @@ const UserLayout = () => {
 
         Swal.fire(
           'Đã đăng xuất!',
-          'Hẹn gặp lại bạn nhé.',
+          'Hẹn gặp lại bác nhé.',
           'success'
         );
       }

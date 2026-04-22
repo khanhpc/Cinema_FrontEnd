@@ -21,10 +21,9 @@ const LoginPage = () => {
 
       Swal.fire({
         title: 'Đăng nhập thành công',
-        text: "Bạn đã đăng nhập thành công",
+        text: "Bác đã đăng nhập thành công",
         icon: 'success',
         confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
         confirmButtonText: 'OK',
       })
 
@@ -36,7 +35,7 @@ const LoginPage = () => {
         navigate("/");
       }
     } catch (error) {
-      toast.error("Bạn nhập sai tài khoản hoặc mật khẩu")
+      toast.error("Bác nhập sai tài khoản hoặc mật khẩu")
     }
   };
 

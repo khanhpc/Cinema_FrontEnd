@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../service/api";
+import Swal from "sweetalert2";
 const AdminMoviePage = () => {
   // State cho dữ liệu nội bộ
   const [localMovies, setLocalMovies] = useState([]);
@@ -46,7 +47,13 @@ const AdminMoviePage = () => {
   const handleImportMovie = async (tmdbId) => {
     try {
       await api.post(`/admin/movies/import/${tmdbId}`);
-      alert(`Đã Import thành công phim có ID: ${tmdbId}`);
+      Swal.fire({
+        title: 'Thêm Film thành công',
+        text: `Đã Import thành công phim có ID: ${tmdbId}`,
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'OK',
+      })
 
       setTmdbResults([]);
       setSearchQuery("");
@@ -112,11 +119,10 @@ const AdminMoviePage = () => {
                 type="submit"
                 disabled={isSearching}
                 className={`px-8 py-3.5 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 min-w-[140px]
-                ${
-                  isSearching
+                ${isSearching
                     ? "bg-blue-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 active:scale-[0.98]"
-                }`}
+                  }`}
               >
                 {isSearching ? (
                   <>

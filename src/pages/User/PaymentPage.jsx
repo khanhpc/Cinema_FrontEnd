@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import api from "../../service/api";
+import Swal from "sweetalert2";
 
 const PaymentPage = () => {
     const { invoiceId } = useParams();
@@ -21,7 +22,13 @@ const PaymentPage = () => {
         try {
             // Gọi API Backend để đổi status thành CONFIRMED
             await api.post(`/user/invoices/${invoiceId}/confirm-payment`);
-            alert("Thanh toán thành công! Chúc bác xem phim vui vẻ.");
+            Swal.fire({
+                    title: 'Thanh toán thành công',
+                    text: `Chúc bác xem phim vui vẻ.`,
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK',
+                  })
             navigate("/profile"); // Quay lại trang lịch sử để xem QR vé
         } catch (e) {
             alert("Có lỗi khi xác nhận thanh toán!");
@@ -46,7 +53,6 @@ const PaymentPage = () => {
                         Quét mã QR dưới đây bằng ứng dụng Ngân hàng hoặc Ví điện tử để thanh toán cho hóa đơn <strong>#{invoiceId}</strong>
                     </p>
 
-                    {/* QR CODE - Cháu giả lập nội dung VietQR */}
                     <div className="bg-white p-4 border-8 border-slate-50 rounded-[32px] shadow-inner mb-8">
                         <QRCodeSVG 
                             value={`00020101021138570010A00000072701270006970423011312345678901230208QRIBFTTA5303704540${invoice.totalPrice}5802VN62070803${invoiceId}`} 
