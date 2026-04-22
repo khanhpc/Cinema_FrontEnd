@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import api from "../../service/api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
@@ -118,12 +118,12 @@ const LoginPage = () => {
               </a>
               <p className="text-sm text-slate-500">
                 Chưa có tài khoản?{" "}
-                <a
-                  href="/register"
+                <Link
+                  to={"/register"}
                   className="font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all"
                 >
                   Đăng ký ngay
-                </a>
+                </Link>
               </p>
             </div>
 
