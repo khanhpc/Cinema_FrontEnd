@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import api from "../../service/api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const RegisterPage = () => {
     const [email, setEmail] = useState("");
@@ -12,10 +13,12 @@ const RegisterPage = () => {
         try {
             const response = await api.post("/public/register", { email, password });
 
-            alert("Đăng ký thành công!");
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            toast.success("Đăng ký thành công")
+            delay(1000);
             navigate("/login");
         } catch (error) {
-            alert("Email này đã tồn tại!");
+            toast.error("Email này đã tồn tại")
         }
     };
 

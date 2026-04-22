@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import api from "../../service/api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -15,14 +17,26 @@ const LoginPage = () => {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", response.data.role);
 
-      alert("Đăng nhập thành công!");
+      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+      Swal.fire({
+        title: 'Đăng nhập thành công',
+        text: "Bạn đã đăng nhập thành công",
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'OK',
+      })
+
+      await delay(500);
+
       if (localStorage.getItem("role") === "ADMIN") {
         navigate("/admin");
       } else {
         navigate("/");
       }
     } catch (error) {
-      alert("Sai tài khoản hoặc mật khẩu bác ơi!");
+      toast.error("Bạn nhập sai tài khoản hoặc mật khẩu")
     }
   };
 

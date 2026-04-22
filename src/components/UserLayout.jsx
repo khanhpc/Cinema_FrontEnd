@@ -1,5 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2';
 
 const UserLayout = () => {
   const location = useLocation();
@@ -7,13 +8,31 @@ const UserLayout = () => {
   const token = localStorage.getItem("token");
 
   const handleLogout = () => {
-    if (window.confirm("Bác có chắc muốn đăng xuất không?")) {
-      localStorage.clear();
-      navigate("/login");
-    }
+    Swal.fire({
+      title: 'Xác nhận đăng xuất',
+      text: "Bạn có chắc muốn đăng xuất không?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Thực hiện logic đăng xuất
+        localStorage.clear();
+        navigate("/login");
+
+        Swal.fire(
+          'Đã đăng xuất!',
+          'Hẹn gặp lại bạn nhé.',
+          'success'
+        );
+      }
+    });
   };
 
-  // Thuật toán kiểm tra xem khách đang ở Tab nào để tô màu đỏ Tab đó
+
   const isHomeTab =
     location.pathname === "/" || location.pathname.includes("/seats");
   const isProfileTab = location.pathname.includes("/profile");
