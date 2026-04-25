@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import api from "../../service/api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const RegisterPage = () => {
@@ -120,12 +120,12 @@ const RegisterPage = () => {
                                 ></path>
                             </svg>
                         </button>
-                        <a
-                            href="/login"
+                        <Link
+                            to="/login"
                             className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-end gap-1"
                         >
                             Quay Lại
-                        </a>
+                        </Link>
                     </form>
                 </div>
             </div>

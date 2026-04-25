@@ -10,7 +10,7 @@ const AdminMoviePage = () => {
   const [tmdbResults, setTmdbResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const TMDB_API_KEY = "29524e18f583bf85ae79f47d34ff3c91";
+  const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
   useEffect(() => {
     fetchLocalMovies();

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: 'https://khanh2k5pc-cinema-api-springboot.hf.space/api',
+    baseURL: import.meta.env.VITE_URL_API_KEY,
     headers: {
         'Content-Type': 'application/json',
     },
