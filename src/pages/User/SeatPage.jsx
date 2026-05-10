@@ -13,7 +13,6 @@ const SeatPage = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
 
   useEffect(() => {
-
     fetchSeats();
   }, [showtimeId, roomId, navigate]);
 
@@ -28,7 +27,7 @@ const SeatPage = () => {
       setSeats(response.data);
     } catch (error) {
       console.error("Lỗi lấy ghế:", error);
-      toast.error("Vui Lòng Đăng Nhập Để Đặt Vé!")
+      toast.error("Vui Lòng Đăng Nhập Để Đặt Vé!");
       navigate(`/login`);
     }
   };
@@ -43,12 +42,12 @@ const SeatPage = () => {
     } else {
       if (selectedSeats.length >= 6) {
         Swal.fire({
-          title: 'Bác ơi!',
+          title: "Bác ơi!",
           text: "Mỗi lần chỉ đặt được tối đa 6 ghế thôi nhé!",
-          icon: 'warning',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'OK',
-        })
+          icon: "warning",
+          confirmButtonColor: "#3085d6",
+          confirmButtonText: "OK",
+        });
         return;
       }
       setSelectedSeats([...selectedSeats, seat]);
@@ -67,7 +66,9 @@ const SeatPage = () => {
 
       const response = await api.post(`/user/bookings/create`, bookingRequest);
 
-      toast.success(`Bác có ${selectedSeats.length} ghế mới. Vui lòng thanh toán chúng`);
+      toast.success(
+        `Bác có ${selectedSeats.length} ghế mới. Vui lòng thanh toán chúng`,
+      );
       navigate("/profile");
     } catch (error) {
       console.error("Lỗi đặt vé:", error);
@@ -85,7 +86,10 @@ const SeatPage = () => {
   const sortedRows = Object.keys(groupedSeats).sort();
 
   // Tính tổng tiền phụ thu để show cho khách xem
-  const totalSurcharge = selectedSeats.reduce((sum, s) => sum + s.surcharge + price, 0);
+  const totalSurcharge = selectedSeats.reduce(
+    (sum, s) => sum + s.surcharge + price,
+    0,
+  );
 
   return (
     <div style={{ padding: "20px", textAlign: "center", fontFamily: "Arial" }}>

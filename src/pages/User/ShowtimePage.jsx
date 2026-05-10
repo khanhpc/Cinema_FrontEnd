@@ -1,181 +1,266 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../service/api';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import api from "../../service/api";
 
 const ShowtimePage = () => {
-    const navigate = useNavigate();
-    const { movieId } = useParams();
+  const navigate = useNavigate();
+  const { movieId } = useParams();
 
-    const [cinemasData, setCinemasData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+  const [cinemasData, setCinemasData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCinema, setSelectedCinema] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
 
-    const [selectedCinema, setSelectedCinema] = useState(null);
+  useEffect(() => {
+    fetchShowtimesData();
+  }, [movieId]);
 
-    useEffect(() => {
-        fetchShowtimesData();
-    }, [movieId]);
-
-    const fetchShowtimesData = async () => {
-        setIsLoading(true);
-        try {
-            const response = await api.get(`public/showtimes/movie/${movieId}`);
-            setCinemasData(response.data);
-        } catch (error) {
-            console.error("Lỗi lấy danh sách rạp và lịch chiếu: ", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const sortedSchedule = selectedCinema?.schedule
-        ? [...selectedCinema.schedule]
-            .sort((a, b) => new Date(a.date) - new Date(b.date))
-            .map(day => ({
-                ...day,
-                rooms: [...day.rooms]
-                    .sort((a, b) => a.roomName.localeCompare(b.roomName))
-                    .map(room => ({
-                        ...room,
-                        times: [...room.times]
-                            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-                    }))
-            }))
-        : [];
-
-    // ==========================================
-    // TRẠNG THÁI LOADING CHUNG
-    // ==========================================
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
-                <svg className="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p className="text-slate-500 font-medium animate-pulse">Đang kết nối hệ thống rạp...</p>
-            </div>
-        );
+  const fetchShowtimesData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get(`public/showtimes/movie/${movieId}`);
+      setCinemasData(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh sách rạp và lịch chiếu: ", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // ==========================================
-    // MÀN HÌNH 1: CHỌN RẠP CHIẾU
-    // ==========================================
-    if (!selectedCinema) {
-        return (
-            <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
-                <div className="max-w-4xl mx-auto space-y-8">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-3">
-                            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            Bác muốn xem ở rạp nào?
-                        </h2>
-                        <p className="mt-2 text-slate-500 font-medium">Vui lòng chọn cụm rạp để xem suất chiếu</p>
-                    </div>
+  const formatDateTab = (dateStr) => {
+    const d = new Date(dateStr);
+    const weekday = d.toLocaleDateString("vi-VN", { weekday: "short" });
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    return { weekday, day, month, full: dateStr };
+  };
 
-                    {cinemasData.length === 0 ? (
-                        <div className="text-center py-10 bg-white rounded-2xl border border-slate-200">
-                            <p className="text-slate-500 font-medium">Phim này hiện chưa có lịch chiếu tại bất kỳ rạp nào.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {cinemasData.map((cinema) => (
-                                <button
-                                    key={cinema.cinemaId}
-                                    onClick={() => setSelectedCinema(cinema)}
-                                    className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 text-left group"
-                                >
-                                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
-                                    </div>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-1">{cinema.cinemaName}</h3>
-                                    {/* Bác có thể hiển thị thêm địa chỉ rạp nếu API có trả về trường address */}
-                                    <p className="text-sm text-slate-500 line-clamp-1">Nhấn để xem suất chiếu</p>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
+  const sortedSchedule = selectedCinema?.schedule
+    ? [...selectedCinema.schedule].sort(
+        (a, b) => new Date(a.date) - new Date(b.date),
+      )
+    : [];
+
+  useEffect(() => {
+    if (sortedSchedule.length > 0 && !selectedDate) {
+      setSelectedDate(sortedSchedule[0].date);
     }
+  }, [selectedCinema, sortedSchedule]);
 
-    // ==========================================
-    // MÀN HÌNH 2: CHỌN NGÀY VÀ GIỜ CHIẾU
-    // ==========================================
+  const activeDayData = sortedSchedule.find((day) => day.date === selectedDate);
+
+  if (isLoading) {
     return (
-        <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
-            <div className="max-w-4xl mx-auto space-y-8">
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center font-sans">
+        <div className="relative w-20 h-20">
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-rose-500/20 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-rose-500 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <p className="mt-6 text-zinc-400 font-bold tracking-widest animate-pulse uppercase">
+          Đang kết nối hệ thống...
+        </p>
+      </div>
+    );
+  }
 
-                {/* Thanh điều hướng: Tên rạp và Nút quay lại */}
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Đang chọn lịch chiếu tại</p>
-                        <h2 className="text-xl font-extrabold text-blue-700 flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                            {selectedCinema.cinemaName}
-                        </h2>
+  // ==========================================
+  // MÀN HÌNH 1: CHỌN CỤM RẠP
+  // ==========================================
+  if (!selectedCinema) {
+    return (
+      <div className="min-h-screen bg-zinc-950 py-16 px-6 font-sans">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
+              Chọn <span className="text-rose-600">Rạp Chiếu</span>
+            </h2>
+            <div className="h-1.5 w-24 bg-rose-600 mx-auto rounded-full"></div>
+            <p className="text-zinc-500 text-lg">
+              Vui lòng chọn rạp để xem lịch bác nhé
+            </p>
+          </div>
+
+          {cinemasData.length === 0 ? (
+            <div className="text-center py-20 bg-zinc-900/50 rounded-[40px] border border-zinc-800">
+              <p className="text-zinc-500 text-xl font-bold">
+                Phim này hiện chưa có lịch chiếu bác ạ!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {cinemasData.map((cinema) => (
+                <button
+                  key={cinema.cinemaId}
+                  onClick={() => setSelectedCinema(cinema)}
+                  className="group relative bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 hover:border-rose-500/50 transition-all duration-500 text-left overflow-hidden shadow-lg"
+                >
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 bg-rose-600/10 rounded-2xl flex items-center justify-center text-rose-500 mb-6 group-hover:bg-rose-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                      {/* Icon Rạp - Đã sửa lỗi path */}
+                      <svg
+                        className="w-8 h-8"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M3 21h18M3 7v14M21 7v14M12 7v14M3 7l9-4 9 4M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4" />
+                      </svg>
                     </div>
-                    <button
-                        onClick={() => setSelectedCinema(null)}
-                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-semibold text-sm transition-colors flex items-center gap-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        Chọn rạp khác
-                    </button>
-                </div>
+                    <h3 className="text-xl font-black text-white mb-2 group-hover:text-rose-500 transition-colors uppercase tracking-tight">
+                      {cinema.cinemaName}
+                    </h3>
+                    <p className="text-zinc-500 font-bold flex items-center gap-2 text-sm uppercase">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                      Xem suất chiếu ❯
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
-                {/* Danh sách suất chiếu */}
-                {sortedSchedule.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
-                        <svg className="w-12 h-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <p className="text-slate-500 font-medium">Rạp này hiện chưa có suất chiếu nào.</p>
+  // ==========================================
+  // MÀN HÌNH 2: CHỌN SUẤT CHIẾU
+  // ==========================================
+  return (
+    <div className="min-h-screen bg-zinc-950 py-12 px-4 sm:px-6 font-sans text-zinc-200">
+      <div className="max-w-5xl mx-auto space-y-10">
+        {/* Header điều hướng */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-zinc-900 p-6 rounded-[35px] border border-zinc-800 shadow-2xl">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedCinema(null)}
+              className="w-12 h-12 flex items-center justify-center bg-zinc-800 hover:bg-rose-600 text-white rounded-2xl transition-all shadow-lg active:scale-90"
+            >
+              {/* Icon Back */}
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                viewBox="0 0 24 24"
+              >
+                <path d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div>
+              <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] mb-1">
+                Hệ thống rạp
+              </p>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+                {selectedCinema.cinemaName}
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Thanh chọn ngày */}
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scroll scroll-smooth">
+          {sortedSchedule.map((day) => {
+            const dateInfo = formatDateTab(day.date);
+            const isActive = selectedDate === day.date;
+            return (
+              <button
+                key={day.date}
+                onClick={() => setSelectedDate(day.date)}
+                className={`flex-shrink-0 w-24 py-5 rounded-[28px] border-2 transition-all duration-300 flex flex-col items-center gap-1
+                                    ${
+                                      isActive
+                                        ? "bg-rose-600 border-rose-600 text-white shadow-xl shadow-rose-600/30 scale-105"
+                                        : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                                    }`}
+              >
+                <span
+                  className={`text-[10px] font-black uppercase tracking-widest ${isActive ? "text-rose-200" : "text-zinc-600"}`}
+                >
+                  {dateInfo.weekday}
+                </span>
+                <span className="text-2xl font-black">{dateInfo.day}</span>
+                <span className="text-[11px] font-bold opacity-80">
+                  Th. {dateInfo.month}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Danh sách phòng */}
+        <div className="space-y-8 min-h-[400px]">
+          {!activeDayData ? (
+            <div className="flex flex-col items-center justify-center py-20 text-zinc-700">
+              <p className="text-xl font-black italic tracking-widest uppercase opacity-30">
+                Vui lòng chọn ngày
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-8">
+              {activeDayData.rooms
+                .sort((a, b) => a.roomName.localeCompare(b.roomName))
+                .map((room) => (
+                  <div
+                    key={room.roomId}
+                    className="bg-zinc-900 rounded-[40px] border border-zinc-800 overflow-hidden shadow-2xl transition-all hover:border-zinc-700"
+                  >
+                    <div className="bg-zinc-800/40 px-8 py-5 border-b border-zinc-800 flex justify-between items-center">
+                      <h4 className="text-white font-black uppercase tracking-[0.2em] flex items-center gap-4 text-sm">
+                        <span className="w-1.5 h-6 bg-rose-600 rounded-full shadow-[0_0_10px_rgba(225,29,72,0.5)]"></span>
+                        PHÒNG: {room.roomName}
+                      </h4>
+                      <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest border border-zinc-700 px-3 py-1 rounded-full">
+                        Digital 2D
+                      </span>
                     </div>
-                ) : (
-                    <div className="space-y-6">
-                        {sortedSchedule.map((day) => (
-                            <div key={day.date} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-md">
-                                <div className="bg-slate-900 px-6 py-4">
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <span className="bg-blue-500/20 text-blue-300 p-1.5 rounded-lg">🗓️</span>
-                                        Ngày chiếu: <span className="text-blue-400 ml-1">{new Date(day.date).toLocaleDateString('vi-VN')}</span>
-                                    </h3>
-                                </div>
 
-                                <div className="p-6 space-y-8">
-                                    {day.rooms.map((room) => (
-                                        <div key={room.roomId} className="flex flex-col md:flex-row md:items-start gap-4">
-                                            <div className="md:w-1/4 flex-shrink-0">
-                                                <h4 className="font-semibold text-slate-700 flex items-center gap-2 text-base">
-                                                    🚪 <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">{room.roomName}</span>
-                                                </h4>
-                                            </div>
-                                            <div className="md:w-3/4 flex flex-wrap gap-3">
-                                                {room.times.map((time) => (
-                                                    <button
-                                                        key={time.showtimeId}
-                                                        onClick={() => navigate(`/seats/${time.showtimeId}/${room.roomId}`)}
-                                                        className="group relative px-6 py-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
-                                                    >
-                                                        {new Date(time.startTime).toLocaleTimeString('vi-VN', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap">
-                                                            Chọn suất này
-                                                        </span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                    <div className="p-10 flex flex-wrap gap-5">
+                      {room.times
+                        .sort(
+                          (a, b) =>
+                            new Date(a.startTime) - new Date(b.startTime),
+                        )
+                        .map((time) => (
+                          <button
+                            key={time.showtimeId}
+                            onClick={() =>
+                              navigate(
+                                `/seats/${time.showtimeId}/${room.roomId}`,
+                              )
+                            }
+                            className="group relative px-10 py-5 bg-zinc-950 border border-zinc-800 rounded-2xl transition-all hover:bg-rose-600 hover:border-rose-600 hover:-translate-y-1.5 shadow-lg active:scale-95"
+                          >
+                            <span className="text-2xl font-black text-white transition-colors">
+                              {new Date(time.startTime).toLocaleTimeString(
+                                "vi-VN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </span>
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-1 bg-white/20 rounded-full group-hover:w-12 group-hover:bg-white/40 transition-all"></div>
+                          </button>
                         ))}
                     </div>
-                )}
+                  </div>
+                ))}
             </div>
+          )}
         </div>
-    );
+      </div>
+
+      <style>
+        {`
+                .custom-scroll::-webkit-scrollbar { height: 6px; }
+                .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+                .custom-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+                `}
+      </style>
+    </div>
+  );
 };
 
 export default ShowtimePage;

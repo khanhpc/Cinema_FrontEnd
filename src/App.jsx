@@ -11,13 +11,14 @@ import PublicRoute from "./components/PublicRoute";
 import HomePage from "./pages/User/HomePage";
 import RegisterPage from "./pages/Auth/RegisterPage";
 import PaymentPage from "./pages/User/PaymentPage";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 import MovieDetailPage from "./pages/User/MovieDetailPage";
+import AllMoviesPage from "./pages/User/AllMoviesPage";
 
 function App() {
   return (
     <BrowserRouter>
-    <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" reverseOrder={false} />
       <Routes>
         <Route element={<UserLayout />}>
           <Route path="/" element={<HomePage />} />
@@ -26,6 +27,7 @@ function App() {
           <Route path="/seats/:showtimeId/:roomId" element={<SeatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/payment/:invoiceId" element={<PaymentPage />} />
+          <Route path="/all-movies" element={<AllMoviesPage />} />
         </Route>
 
         <Route

@@ -1,20 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../../service/api";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const AdminShowtimePage = () => {
   const [movies, setMovies] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [showtimes, setShowtimes] = useState([]);
+  const [expandedMovies, setExpandedMovies] = useState({});
+  const [expandedCinemas, setExpandedCinemas] = useState({}); // State mới để quản lý đóng mở Rạp
   const [form, setForm] = useState({
     movieId: "",
     roomId: "",
     startTime: "",
     price: "",
+    tempCinemaId: "",
   });
 
-  const [showtimes, setShowtimes] = useState([]);
-
-  const [expandedMovies, setExpandedMovies] = useState({});
+  const dateInputRef = useRef(null);
 
   useEffect(() => {
     fetchShowtimes();
@@ -22,419 +25,424 @@ const AdminShowtimePage = () => {
     api.get("/admin/rooms").then((res) => setRooms(res.data));
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post("/admin/showtimes/create", form);
-      toast.success("Lên lịch thành công!");
-
-      setForm({ movieId: "", roomId: "", startTime: "", price: "" });
-
-      fetchShowtimes();
-    } catch (error) {
-      alert(error.response?.data?.error || "Lỗi trùng lịch chiếu bác ơi!");
-    }
-  };
-
   const fetchShowtimes = async () => {
     try {
       const response = await api.get("/admin/showtimes");
       const now = new Date();
-      const filteredAndSorted = response.data
+      // CHỈ HIỆN SUẤT CHIẾU SẮP TỚI
+      const upcoming = response.data
         .filter((st) => new Date(st.startTime) >= now)
         .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-      setShowtimes(filteredAndSorted);
+      setShowtimes(upcoming);
     } catch (error) {
-      console.error("Lỗi lấy danh sách suất chiếu:", error);
+      console.error("Lỗi:", error);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Bác có chắc muốn xóa suất chiếu này không?")) {
-      try {
-        await api.delete(`/admin/showtimes/delete/${id}`);
-      } catch (error) {
-        alert("Không thể xóa suất chiếu này (có thể do đã có người đặt vé)!");
-      } finally {
-        fetchShowtimes();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/admin/showtimes/create", {
+        movieId: form.movieId,
+        roomId: form.roomId,
+        startTime: form.startTime,
+        price: form.price,
+      });
+      toast.success("Lên lịch thành công bác nhé!");
+      setForm({
+        movieId: "",
+        roomId: "",
+        startTime: "",
+        price: "",
+        tempCinemaId: "",
+      });
+      fetchShowtimes();
+    } catch (error) {
+      Swal.fire({
+        title: "Lỗi trùng lịch!",
+        text: error.response?.data?.error || "Giờ này phòng đã bận rồi!",
+        icon: "error",
+        background: "#18181b",
+        color: "#fff",
+      });
+    }
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Suất chiếu sẽ bị gỡ khỏi hệ thống!",
+      icon: "warning",
+      showCancelButton: true,
+      background: "#18181b",
+      color: "#fff",
+      confirmButtonColor: "#e11d48",
+      confirmButtonText: "Xóa ngay",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/admin/showtimes/delete/${id}`);
+          toast.success("Đã xóa!");
+          fetchShowtimes();
+        } catch (error) {
+          toast.error("Không xóa được suất này!");
+        }
       }
-    }
+    });
   };
 
-  const toggleMovieAccordion = (movieId) => {
-    setExpandedMovies((prev) => ({
-      ...prev,
-      [movieId]: !prev[movieId],
-    }));
+  const toggleMovie = (id) => {
+    setExpandedMovies((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const groupedShowtimes = showtimes.reduce((acc, st) => {
-    const movieId = st.movie.id;
-    const cinemaId = st.room.cinema.id;
-    const roomId = st.room.id;
+  const toggleCinema = (movieId, cinemaId) => {
+    const key = `${movieId}-${cinemaId}`;
+    setExpandedCinemas((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
-    if (!acc[movieId]) {
-      acc[movieId] = {
-        movieInfo: st.movie,
-        cinemas: {},
-      };
-    }
+  // GOM NHÓM DỮ LIỆU 3 TẦNG: PHIM -> RẠP -> NGÀY
+  const groupedData = showtimes.reduce((acc, st) => {
+    const mId = st.movie.id;
+    const cId = st.room.cinema.id;
+    const dateKey = st.startTime.split("T")[0];
 
-    if (!acc[movieId].cinemas[cinemaId]) {
-      acc[movieId].cinemas[cinemaId] = {
-        cinemaInfo: st.room.cinema,
-        rooms: {},
-      };
-    }
+    if (!acc[mId]) acc[mId] = { info: st.movie, cinemas: {} };
+    if (!acc[mId].cinemas[cId])
+      acc[mId].cinemas[cId] = { info: st.room.cinema, dates: {} };
+    if (!acc[mId].cinemas[cId].dates[dateKey])
+      acc[mId].cinemas[cId].dates[dateKey] = [];
 
-    // 3. Tạo nhánh Phòng bên trong Rạp nếu chưa có
-    if (!acc[movieId].cinemas[cinemaId].rooms[roomId]) {
-      acc[movieId].cinemas[cinemaId].rooms[roomId] = {
-        roomInfo: st.room,
-        times: [],
-      };
-    }
-
-    acc[movieId].cinemas[cinemaId].rooms[roomId].times.push(st);
-
+    acc[mId].cinemas[cId].dates[dateKey].push(st);
     return acc;
   }, {});
 
-  const groupedDataArray = Object.values(groupedShowtimes);
-
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-6 md:p-10 font-sans text-slate-800 pb-20">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* KHU VỰC 1: FORM TẠO SUẤT CHIẾU */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:p-8">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 4v16m8-8H4"
-                ></path>
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold text-slate-800">
-              Tạo suất chiếu mới
+    <div className="h-full bg-transparent p-4 lg:p-8 font-sans text-zinc-300 pb-32 animate-fadeIn">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* ================= THIẾT LẬP SUẤT CHIẾU (FORM CÂN ĐỐI) ================= */}
+        <div className="bg-zinc-900/40 backdrop-blur-xl rounded-[40px] border border-zinc-800 shadow-2xl overflow-hidden">
+          <div className="p-6 border-b border-zinc-800/50 bg-gradient-to-r from-rose-500/5 to-transparent">
+            <h2 className="text-lg font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+              <span className="w-1.5 h-6 bg-rose-600 rounded-full shadow-[0_0_10px_rgba(225,29,72,0.5)]"></span>
+              Thiết lập suất chiếu
             </h2>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 items-end"
-          >
-            {/* 1. Chọn Phim */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-600">
-                Phim
-              </label>
-              <select
-                className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-700 hover:border-slate-400 focus:border-blue-500 focus:ring-4 transition-all outline-none"
-                value={form.movieId}
-                onChange={(e) => setForm({ ...form, movieId: e.target.value })}
-                required
-              >
-                <option value="" disabled>
-                  -- Chọn phim --
-                </option>
-                {movies.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.title}
+          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+            {/* HÀNG 1: PHIM - RẠP - PHÒNG */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase ml-1 tracking-widest">
+                  1. Chọn Phim
+                </label>
+                <select
+                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white outline-none focus:border-rose-500 transition-all cursor-pointer appearance-none"
+                  value={form.movieId}
+                  onChange={(e) =>
+                    setForm({ ...form, movieId: e.target.value })
+                  }
+                  required
+                >
+                  <option value="" disabled>
+                    -- Chọn phim --
                   </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 2. Chọn Rạp (TRƯỜNG MỚI THÊM) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-600">
-                Rạp chiếu
-              </label>
-              <select
-                className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-700 hover:border-slate-400 focus:border-blue-500 focus:ring-4 transition-all outline-none"
-                // Vì form chỉ lưu roomId lên server, ta dùng 1 state tạm (hoặc lấy từ roomId) để hiển thị rạp đang chọn.
-                // Nhưng để đơn giản và chuẩn UX, ta cứ bắt Admin chọn rạp để lọc phòng.
-                value={form.tempCinemaId || ""}
-                onChange={(e) => {
-                  setForm({
-                    ...form,
-                    tempCinemaId: e.target.value,
-                    roomId: "", // Reset phòng khi đổi rạp!
-                  });
-                }}
-                required
-              >
-                <option value="" disabled>
-                  -- 1. Chọn rạp --
-                </option>
-                {/* Mẹo: Bác có mảng 'rooms' (phòng chứa info rạp). 
-        Ta lọc ra danh sách rạp duy nhất từ mảng phòng này để làm tùy chọn.
-      */}
-                {Array.from(new Set(rooms.map((r) => r.cinema?.id)))
-                  .filter(Boolean)
-                  .map((cinemaId) => {
-                    const cinemaName = rooms.find(
-                      (r) => r.cinema?.id === cinemaId,
-                    )?.cinema?.name;
-                    return (
-                      <option key={cinemaId} value={cinemaId}>
-                        {cinemaName}
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
-
-            {/* 3. Chọn Phòng (CHỈ HIỆN PHÒNG CỦA RẠP ĐÃ CHỌN) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-600">
-                Phòng chiếu
-              </label>
-              <select
-                className={`w-full border rounded-xl p-3 text-slate-700 transition-all outline-none ${
-                  !form.tempCinemaId
-                    ? "bg-slate-100 border-slate-200 cursor-not-allowed text-slate-400"
-                    : "bg-white border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-4"
-                }`}
-                value={form.roomId}
-                onChange={(e) => setForm({ ...form, roomId: e.target.value })}
-                required
-                disabled={!form.tempCinemaId} // Khóa lại nếu chưa chọn rạp
-              >
-                <option value="" disabled>
-                  - 2. Chọn phòng -
-                </option>
-
-                {/* LOGIC LỌC: Chỉ map những phòng có id rạp trùng với rạp đang chọn */}
-                {rooms
-                  .filter(
-                    (r) =>
-                      r.cinema?.id.toString() === form.tempCinemaId?.toString(),
-                  )
-                  .map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
+                  {movies.map((m) => (
+                    <option key={m.id} value={m.id} className="bg-zinc-900">
+                      {m.title}
                     </option>
                   ))}
-              </select>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase ml-1 tracking-widest">
+                  2. Chọn Rạp
+                </label>
+                <select
+                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white outline-none focus:border-rose-500 transition-all cursor-pointer appearance-none"
+                  value={form.tempCinemaId || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      tempCinemaId: e.target.value,
+                      roomId: "",
+                    })
+                  }
+                  required
+                >
+                  <option value="" disabled>
+                    -- Chọn rạp --
+                  </option>
+                  {Array.from(new Set(rooms.map((r) => r.cinema?.id)))
+                    .filter(Boolean)
+                    .map((id) => (
+                      <option key={id} value={id} className="bg-zinc-900">
+                        {rooms.find((r) => r.cinema?.id === id)?.cinema?.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase ml-1 tracking-widest">
+                  3. Chọn Phòng
+                </label>
+                <select
+                  className={`w-full p-4 border rounded-2xl text-white outline-none transition-all appearance-none ${!form.tempCinemaId ? "bg-zinc-800/30 border-zinc-900 text-zinc-700" : "bg-zinc-950/50 border-zinc-800 focus:border-rose-500"}`}
+                  value={form.roomId}
+                  onChange={(e) => setForm({ ...form, roomId: e.target.value })}
+                  required
+                  disabled={!form.tempCinemaId}
+                >
+                  <option value="" disabled>
+                    -- Chọn phòng --
+                  </option>
+                  {rooms
+                    .filter(
+                      (r) =>
+                        r.cinema?.id.toString() ===
+                        form.tempCinemaId?.toString(),
+                    )
+                    .map((r) => (
+                      <option key={r.id} value={r.id} className="bg-zinc-900">
+                        {r.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
 
-            {/* 4. Chọn Thời Gian */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-600">
-                Thời gian
-              </label>
-              <input
-                type="datetime-local"
-                className="w-full border border-slate-300 rounded-xl p-3 text-slate-700 hover:border-slate-400 focus:border-blue-500 focus:ring-4 transition-all outline-none"
-                value={form.startTime}
-                onChange={(e) =>
-                  setForm({ ...form, startTime: e.target.value })
-                }
-                required
-              />
-            </div>
+            {/* HÀNG 2: NGÀY GIỜ (TRÁI) - GIÁ (GIỮA) - XÁC NHẬN (PHẢI) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-end pt-6 border-t border-zinc-800/50">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-rose-500 uppercase ml-1 tracking-widest">
+                  4. Thời gian chiếu
+                </label>
+                <div
+                  onClick={() => dateInputRef.current.showPicker()}
+                  className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4 flex items-center hover:border-rose-500 transition-all cursor-pointer"
+                >
+                  <input
+                    ref={dateInputRef}
+                    type="datetime-local"
+                    className="bg-transparent text-white font-bold text-sm outline-none w-full cursor-pointer"
+                    value={form.startTime}
+                    onChange={(e) =>
+                      setForm({ ...form, startTime: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              </div>
 
-            {/* 5. Nhập Giá vé */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-600">
-                Giá vé (VNĐ)
-              </label>
-              <input
-                type="number"
-                placeholder="VD: 50000"
-                className="w-full border border-slate-300 rounded-xl p-3 text-slate-700 placeholder-slate-400 hover:border-slate-400 focus:border-blue-500 focus:ring-4 transition-all outline-none"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                required
-                min="0"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase ml-1 tracking-widest">
+                  5. Giá vé niêm yết (VNĐ)
+                </label>
+                <div className="relative group">
+                  <input
+                    type="number"
+                    placeholder="85000"
+                    className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white font-black focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all pr-12"
+                    value={form.price}
+                    onChange={(e) =>
+                      setForm({ ...form, price: e.target.value })
+                    }
+                    required
+                    min="0"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 font-bold group-focus-within:text-amber-500 transition-colors">
+                    đ
+                  </span>
+                </div>
+              </div>
 
-            {/* 6. Nút Submit */}
-            <button
-              type="submit"
-              className="w-full h-[50px] bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              Lên lịch ngay
-            </button>
+              <button
+                type="submit"
+                className="h-16 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-rose-600/20 active:scale-95 uppercase text-sm tracking-[0.2em]"
+              >
+                Xác nhận lên lịch
+              </button>
+            </div>
           </form>
         </div>
 
-        {/* KHU VỰC 2: DANH SÁCH SUẤT CHIẾU ĐƯỢC GOM NHÓM */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              📋 Quản lý lịch chiếu theo Phim
-            </h2>
-            <span className="bg-slate-200 text-slate-700 px-3 py-1 rounded-full text-xs font-bold">
-              Tổng cộng: {showtimes.length} suất
-            </span>
-          </div>
+        {/* ================= DANH SÁCH LỊCH CHIẾU (3 TẦNG ACCORDION) ================= */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-black text-white uppercase tracking-tighter ml-2 flex items-center gap-3">
+            <span className="text-2xl drop-shadow-[0_0_10px_rgba(225,29,72,0.5)]">
+              🎞️
+            </span>{" "}
+            Lịch chiếu hệ thống
+          </h2>
 
-          {groupedDataArray.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 py-16 text-center">
-              <p className="text-slate-500 font-medium">
-                Chưa có suất chiếu nào trong tương lai.
-              </p>
-            </div>
-          ) : (
-            groupedDataArray.map((movieGroup) => {
-              const movieId = movieGroup.movieInfo.id;
-              const isExpanded = expandedMovies[movieId];
-
-              // Đếm tổng số suất chiếu của phim này
-              let totalTimesForMovie = 0;
-              Object.values(movieGroup.cinemas).forEach((c) => {
-                Object.values(c.rooms).forEach((r) => {
-                  totalTimesForMovie += r.times.length;
-                });
-              });
-
-              return (
+          {Object.values(groupedData).map((movie) => (
+            <div
+              key={movie.info.id}
+              className="bg-zinc-900/40 backdrop-blur-md rounded-[35px] border border-zinc-800 overflow-hidden shadow-2xl transition-all mb-6"
+            >
+              {/* PHIM (LEVEL 1) */}
+              <div
+                onClick={() => toggleMovie(movie.info.id)}
+                className="p-6 flex items-center gap-6 cursor-pointer hover:bg-white/5 transition-all"
+              >
+                <img
+                  src={movie.info.posterUrl}
+                  className="w-16 h-24 rounded-2xl object-cover border border-white/10 shadow-lg"
+                  alt="poster"
+                />
+                <div className="flex-1">
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                    {movie.info.title}
+                  </h3>
+                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">
+                    ⏱️ {movie.info.duration} Phút • Đang có{" "}
+                    {Object.keys(movie.cinemas).length} Rạp chiếu
+                  </p>
+                </div>
                 <div
-                  key={movieId}
-                  className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+                  className={`w-12 h-12 rounded-full border border-zinc-800 flex items-center justify-center text-zinc-500 transition-all duration-500 ${expandedMovies[movie.info.id] ? "rotate-180 bg-rose-600 text-white border-rose-600" : "hover:text-rose-500"}`}
                 >
-                  {/* THANH TIÊU ĐỀ CỦA PHIM (Click để đóng/mở) */}
-                  <button
-                    onClick={() => toggleMovieAccordion(movieId)}
-                    className="w-full flex items-center justify-between p-5 bg-slate-800 text-white hover:bg-slate-700 transition-colors"
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center font-bold">
-                        🎬
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-bold text-lg">
-                          {movieGroup.movieInfo.title}
-                        </h3>
-                        <p className="text-xs text-slate-300">
-                          Thời lượng: {movieGroup.movieInfo.duration} phút
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                        {totalTimesForMovie} suất chiếu
-                      </span>
-                      <svg
-                        className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <path
+                      d="M19 9l-7 7-7-7"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* RẠP (LEVEL 2) */}
+              {expandedMovies[movie.info.id] && (
+                <div className="p-8 pt-0 space-y-4 animate-fadeIn bg-black/20">
+                  {Object.values(movie.cinemas).map((cinema) => {
+                    const cinKey = `${movie.info.id}-${cinema.info.id}`;
+                    const isCinExpanded = expandedCinemas[cinKey];
+                    return (
+                      <div
+                        key={cinema.info.id}
+                        className="rounded-3xl border border-zinc-800 overflow-hidden"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
-                  </button>
-
-                  {/* NỘI DUNG BÊN TRONG KHI MỞ RỘNG (Gồm Rạp -> Phòng -> Giờ) */}
-                  {isExpanded && (
-                    <div className="p-6 space-y-8 bg-slate-50">
-                      {Object.values(movieGroup.cinemas).map((cinemaGroup) => (
-                        <div
-                          key={cinemaGroup.cinemaInfo.id}
-                          className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm"
+                        <button
+                          onClick={() =>
+                            toggleCinema(movie.info.id, cinema.info.id)
+                          }
+                          className="w-full p-5 bg-zinc-900/80 flex items-center justify-between hover:bg-zinc-800 transition-all"
                         >
-                          {/* Tên Rạp */}
-                          <h4 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
-                            <span className="text-blue-600">📍</span>{" "}
-                            {cinemaGroup.cinemaInfo.name}
-                          </h4>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">📍</span>
+                            <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                              {cinema.info.name}
+                            </h4>
+                          </div>
+                          <div
+                            className={`transition-transform duration-300 ${isCinExpanded ? "rotate-180 text-rose-500" : "text-zinc-600"}`}
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M19 9l-7 7-7-7" strokeWidth="3" />
+                            </svg>
+                          </div>
+                        </button>
 
-                          {/* Danh sách Phòng trong Rạp */}
-                          <div className="space-y-6">
-                            {Object.values(cinemaGroup.rooms).map(
-                              (roomGroup) => (
+                        {/* NGÀY & GIỜ (LEVEL 3) */}
+                        {isCinExpanded && (
+                          <div className="p-6 space-y-10 bg-zinc-950/50 animate-fadeIn">
+                            {Object.keys(cinema.dates)
+                              .sort()
+                              .map((date) => (
                                 <div
-                                  key={roomGroup.roomInfo.id}
-                                  className="flex flex-col md:flex-row md:items-start gap-4"
+                                  key={date}
+                                  className="space-y-4 border-l-2 border-zinc-800 pl-6 relative"
                                 >
-                                  {/* Tên Phòng */}
-                                  <div className="md:w-1/4 shrink-0 pt-1">
-                                    <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-200">
-                                      🚪 {roomGroup.roomInfo.name}
-                                    </span>
-                                  </div>
+                                  <div className="absolute top-0 -left-[5px] w-2 h-2 bg-rose-600 rounded-full shadow-[0_0_8px_rgba(225,29,72,1)]"></div>
+                                  <h5 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">
+                                    {new Date(date).toLocaleDateString(
+                                      "vi-VN",
+                                      {
+                                        weekday: "long",
+                                        day: "numeric",
+                                        month: "long",
+                                      },
+                                    )}
+                                  </h5>
 
-                                  {/* Các Cục Giờ Chiếu */}
-                                  <div className="md:w-3/4 flex flex-wrap gap-3">
-                                    {roomGroup.times.map((st) => (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {cinema.dates[date].map((st) => (
                                       <div
                                         key={st.id}
-                                        className="group relative flex items-center bg-white border border-slate-300 rounded-lg overflow-hidden hover:border-blue-500 hover:shadow-md transition-all"
+                                        className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex items-center justify-between group hover:border-amber-500/50 transition-all shadow-lg relative overflow-hidden"
                                       >
-                                        {/* Thông tin giờ và giá */}
-                                        <div className="px-3 py-2 flex flex-col">
-                                          <span className="font-bold text-slate-700">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                                        <div>
+                                          <p className="text-lg font-black text-white tracking-tighter">
                                             {new Date(
                                               st.startTime,
-                                            ).toLocaleString("vi-VN", {
-                                              dateStyle: "short",
-                                              timeStyle: "short",
+                                            ).toLocaleTimeString("vi-VN", {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
                                             })}
-                                          </span>
-                                          <span className="text-[11px] text-slate-500 font-medium">
-                                            {Number(st.price).toLocaleString()}{" "}
-                                            đ
-                                          </span>
+                                          </p>
+                                          <p className="text-[10px] text-zinc-500 font-bold uppercase truncate max-w-[120px]">
+                                            Phòng {st.room.name}
+                                          </p>
                                         </div>
-
-                                        {/* Nút Xóa (Dấu X đỏ) */}
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(st.id);
-                                          }}
-                                          className="h-full px-2 bg-slate-50 text-slate-400 hover:bg-red-500 hover:text-white border-l border-slate-200 transition-colors flex items-center justify-center"
-                                          title="Xóa suất này"
-                                        >
-                                          <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                        <div className="flex flex-col items-end gap-1">
+                                          <span className="text-[10px] font-black text-amber-500">
+                                            {st.price.toLocaleString()}đ
+                                          </span>
+                                          <button
+                                            onClick={() => handleDelete(st.id)}
+                                            className="text-zinc-700 hover:text-rose-500 transition-colors p-1"
                                           >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth="2"
-                                              d="M6 18L18 6M6 6l12 12"
-                                            ></path>
-                                          </svg>
-                                        </button>
+                                            <svg
+                                              className="w-5 h-5"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                d="M6 18L18 6M6 6l12 12"
+                                                strokeWidth="2.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                              />
+                                            </svg>
+                                          </button>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
                                 </div>
-                              ),
-                            )}
+                              ))}
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })
-          )}
+              )}
+            </div>
+          ))}
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+      `}</style>
     </div>
   );
 };

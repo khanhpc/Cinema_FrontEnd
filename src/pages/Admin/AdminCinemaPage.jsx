@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../service/api";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2"; // Bác nhớ cài/import cái này nhé
 
 const AdminCinemaPage = () => {
   const [form, setForm] = useState({ name: "", location: "" });
@@ -13,7 +14,6 @@ const AdminCinemaPage = () => {
   const fetchCinemas = async () => {
     try {
       const response = await api.get(`admin/cinemas`);
-
       setCinemas(response.data);
     } catch (error) {
       console.log(error.data);
@@ -24,78 +24,107 @@ const AdminCinemaPage = () => {
     e.preventDefault();
     try {
       await api.post(`/admin/cinemas/create`, form);
-      toast.success("tạo rạp thành công");
-      setForm({
-        name: "",
-        location: "",
+      toast.success("Tạo rạp mới thành công bác nhé!", {
+        style: { background: "#18181b", color: "#fff", borderRadius: "10px" },
       });
+      setForm({ name: "", location: "" });
       fetchCinemas();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data || "Lỗi rồi bác ơi!");
+      // THAY THẾ ALERT BẰNG SWAL
+      Swal.fire({
+        title: "Lỗi rồi bác ơi!",
+        text:
+          error.response?.data ||
+          "Không tạo được rạp, bác kiểm tra lại thông tin nhé.",
+        icon: "error",
+        background: "#18181b",
+        color: "#fff",
+        confirmButtonColor: "#e11d48",
+      });
     }
   };
 
-  const handleDeleteCinema = async (id) => {
-    if (window.confirm("Bác có chắc muốn xóa Cinema này không?")) {
-      try {
-        await api.delete(`admin/cinemas/delete/${id}`);
-        toast.success("Xóa Cinema thành công");
-        fetchCinemas();
-      } catch (error) {
-        console.error(error);
+  const handleDeleteCinema = (id) => {
+    // THAY THẾ CONFIRM BẰNG SWAL XỊN
+    Swal.fire({
+      title: "Xác nhận xóa rạp?",
+      text: "Bác chắc chắn muốn gỡ rạp này khỏi hệ thống chứ?",
+      icon: "warning",
+      showCancelButton: true,
+      background: "#18181b",
+      color: "#fff",
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#27272a",
+      confirmButtonText: "Đúng, xóa luôn!",
+      cancelButtonText: "Hủy",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`admin/cinemas/delete/${id}`);
+          toast.success("Đã xóa rạp thành công!", {
+            style: {
+              background: "#18181b",
+              color: "#fff",
+              borderRadius: "10px",
+            },
+          });
+          fetchCinemas();
+        } catch (error) {
+          console.error(error);
+          toast.error("Lỗi khi xóa rạp rồi bác!");
+        }
       }
-    }
+    });
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-6 md:p-8 font-sans text-slate-800 pb-20">
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
+    <div className="h-full min-h-screen bg-transparent p-4 lg:p-8 font-sans text-zinc-300 pb-32 animate-fadeIn">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10">
         {/* ================= CỘT TRÁI: FORM TẠO RẠP ================= */}
-        <div className="lg:w-1/3 shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden sticky top-8">
-            <div className="p-6 border-b border-slate-200 bg-blue-50/50">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
+        <div className="lg:w-[350px] shrink-0">
+          <div className="bg-zinc-900/40 backdrop-blur-xl rounded-[35px] border border-zinc-800 shadow-2xl sticky top-8 overflow-hidden">
+            <div className="p-8 border-b border-zinc-800/50 bg-gradient-to-br from-rose-500/10 to-transparent">
+              <h2 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-tighter">
+                <div className="p-2 bg-rose-600 rounded-lg shadow-lg shadow-rose-600/20">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </div>
                 Tạo Rạp Mới
               </h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-[11px] text-zinc-500 mt-2 font-bold uppercase tracking-widest opacity-60">
                 Thêm cụm rạp vào hệ thống
               </p>
             </div>
 
-            <form onSubmit={handCreateCinema} className="p-6 space-y-5">
-              {/* Tên rạp */}
-              <div>
-                <label className="text-sm font-semibold text-slate-600 block mb-1.5">
-                  Tên Rạp
+            <form onSubmit={handCreateCinema} className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Tên Cụm Rạp
                 </label>
                 <input
                   type="text"
-                  placeholder="VD: Cinemax Hà Nội"
+                  placeholder="VD: Cinema Plus Hà Nội"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all text-slate-700"
+                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white placeholder-zinc-700 focus:outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all"
                   required
                 />
               </div>
 
-              {/* Địa chỉ rạp */}
-              <div>
-                <label className="text-sm font-semibold text-slate-600 block mb-1.5">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest ml-1">
                   Địa điểm / Khu vực
                 </label>
                 <input
@@ -105,53 +134,54 @@ const AdminCinemaPage = () => {
                   onChange={(e) =>
                     setForm({ ...form, location: e.target.value })
                   }
-                  className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all text-slate-700"
+                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white placeholder-zinc-700 focus:outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all"
                   required
                 />
               </div>
 
-              {/* Nút Submit */}
               <button
                 type="submit"
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/30 active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+                className="w-full py-5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-rose-600/20 active:scale-[0.97] uppercase tracking-widest text-sm flex items-center justify-center gap-3 mt-4"
               >
-                <span>Thêm Rạp</span>
+                XÁC NHẬN THÊM RẠP
               </button>
             </form>
           </div>
         </div>
 
         {/* ================= CỘT PHẢI: DANH SÁCH RẠP ================= */}
-        <div className="lg:w-2/3 flex-1">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-white">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                📋 Danh sách Rạp chiếu
-              </h2>
-              <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold">
-                {cinemas.length} rạp
+        <div className="flex-1 min-w-0">
+          <div className="bg-zinc-900/30 backdrop-blur-md rounded-[40px] border border-zinc-800 overflow-hidden shadow-2xl">
+            <div className="p-8 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+              <div className="flex items-center gap-4">
+                <div className="w-2 h-8 bg-rose-600 rounded-full"></div>
+                <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
+                  Danh sách rạp chiếu
+                </h2>
+              </div>
+              <span className="bg-zinc-800 text-rose-500 px-4 py-1.5 rounded-full text-[11px] font-black uppercase border border-zinc-700">
+                {cinemas.length} rạp trên toàn quốc
               </span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                {/* Đã sửa lại cấu trúc thead > tr > th */}
-                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
-                  <tr>
-                    <th className="px-6 py-4">Tên Rạp</th>
-                    <th className="px-6 py-4">Địa Chỉ</th>
-                    <th className="px-6 py-4 text-center">Hành động</th>
+            <div className="overflow-x-auto custom-scroll">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-zinc-950/50 text-zinc-500 font-black uppercase text-[10px] tracking-[0.2em]">
+                    <th className="px-8 py-5">#</th>
+                    <th className="px-8 py-5">Tên Cụm Rạp</th>
+                    <th className="px-8 py-5">Địa Chỉ Chi Tiết</th>
+                    <th className="px-8 py-5 text-center">Hành động</th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-zinc-800/50">
                   {cinemas.length === 0 ? (
                     <tr>
-                      {/* colSpan="3" để chiếm trọn chiều ngang của bảng */}
-                      <td colSpan="3" className="text-center py-16">
-                        <div className="flex flex-col items-center justify-center text-slate-400">
+                      <td colSpan="4" className="text-center py-24">
+                        <div className="flex flex-col items-center justify-center text-zinc-600 opacity-40">
                           <svg
-                            className="w-12 h-12 mb-3 text-slate-300"
+                            className="w-20 h-20 mb-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -159,37 +189,36 @@ const AdminCinemaPage = () => {
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              strokeWidth="1.5"
+                              strokeWidth="1"
                               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                            ></path>
+                            />
                           </svg>
-                          <p className="text-base font-medium text-slate-500">
-                            Hệ thống chưa có rạp nào
-                          </p>
-                          <p className="text-sm mt-1">
-                            Hãy sử dụng form bên cạnh để thêm rạp mới.
+                          <p className="text-lg font-bold uppercase tracking-widest">
+                            Hệ thống chưa có dữ liệu rạp
                           </p>
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    // Đã sửa lại lỗi arrow function không có return
                     cinemas.map((c, index) => (
                       <tr
                         key={c.id || index}
-                        className="hover:bg-slate-50/80 transition duration-150 group"
+                        className="hover:bg-white/5 transition-colors group"
                       >
-                        <td className="px-6 py-4 font-bold text-slate-800">
+                        <td className="px-8 py-6 text-zinc-600 font-bold text-xs">
+                          {index + 1}
+                        </td>
+                        <td className="px-8 py-6 font-black text-white text-base group-hover:text-rose-500 transition-colors uppercase tracking-tight">
                           {c.name}
                         </td>
-                        <td className="px-6 py-4 text-slate-600">
+                        <td className="px-8 py-6 text-zinc-400 font-medium text-sm italic">
                           {c.location}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-8 py-6 text-center">
                           <button
                             onClick={() => handleDeleteCinema(c.id)}
-                            className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors duration-200"
-                            title="Xóa rạp"
+                            className="text-zinc-600 hover:text-white hover:bg-rose-600 p-3 rounded-2xl transition-all duration-300 shadow-sm active:scale-90"
+                            title="Xóa rạp này"
                           >
                             <svg
                               className="w-5 h-5"
@@ -202,7 +231,7 @@ const AdminCinemaPage = () => {
                                 strokeLinejoin="round"
                                 strokeWidth="2"
                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              ></path>
+                              />
                             </svg>
                           </button>
                         </td>
@@ -215,6 +244,19 @@ const AdminCinemaPage = () => {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #e11d48; }
+      `}</style>
     </div>
   );
 };

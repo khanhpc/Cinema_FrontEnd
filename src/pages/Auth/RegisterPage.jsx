@@ -4,133 +4,193 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const RegisterPage = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await api.post("/public/register", { email, password });
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/public/register", { email, password });
 
-            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-            toast.success("Đăng ký thành công")
-            delay(1000);
-            navigate("/login");
-        } catch (error) {
-            toast.error("Email này đã tồn tại")
-        }
-    };
+      // Hàm tạo độ trễ để người dùng kịp nhìn thấy thông báo thành công
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    return (
-        <div className="min-h-screen bg-slate-900 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black flex items-center justify-center p-4 font-sans">
-            <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
-                {/* HEADER LOGO */}
-                <a className="bg-slate-50 p-8 text-center border-b border-slate-100" href="/">
-                    <div style={{ color: '#e50914', fontSize: '24px', fontWeight: '900', letterSpacing: '2px' }}>
-                        🎬 CINEMA PLUS
-                    </div>
-                    <p className="text-slate-500 text-sm font-medium">Đăng ký</p>
-                </a>
+      toast.success("Chào mừng bác! Đăng ký thành công rồi nhé.", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
 
-                {/* FORM AREA */}
-                <div className="p-8 md:p-10">
-                    <form onSubmit={handleRegister} className="space-y-6">
-                        {/* Input Email */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 block">
-                                Email
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                                        ></path>
-                                    </svg>
-                                </div>
-                                <input
-                                    type="email"
-                                    placeholder="admin@cinema.com"
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none bg-slate-50 focus:bg-white"
-                                    required
-                                />
-                            </div>
-                        </div>
+      await delay(1500); // Chờ 1.5 giây cho "ngầu"
+      navigate("/login");
+    } catch (error) {
+      toast.error("Email này đã có người dùng rồi bác ơi!", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
+    }
+  };
 
-                        {/* Input Mật khẩu */}
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm font-bold text-slate-700 block">
-                                    Mật khẩu
-                                </label>
-                            </div>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                        ></path>
-                                    </svg>
-                                </div>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none bg-slate-50 focus:bg-white"
-                                    required
-                                />
-                            </div>
-                        </div>
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* Hiệu ứng ánh sáng nền mờ ảo (Cinematic Blobs) */}
+      <div className="absolute top-[-15%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 rounded-full blur-[120px]"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-rose-900/20 rounded-full blur-[120px]"></div>
 
-                        {/* Nút Đăng ký */}
-                        <button
-                            type="submit"
-                            className="w-full mt-2 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/30 active:scale-[0.98] flex items-center justify-center gap-2"
-                        >
-                            <span>ĐĂNG KÝ TÀI KHOẢN</span>
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                                ></path>
-                            </svg>
-                        </button>
-                        <Link
-                            to="/login"
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-end gap-1"
-                        >
-                            Quay Lại
-                        </Link>
-                    </form>
+      <div className="max-w-md w-full relative z-10">
+        {/* NÚT QUAY LẠI TRANG CHỦ */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-all mb-8 font-bold text-sm group"
+        >
+          <svg
+            className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          TRANG CHỦ
+        </Link>
+
+        {/* CARD ĐĂNG KÝ (Glassmorphism) */}
+        <div className="bg-zinc-900/40 backdrop-blur-3xl rounded-[40px] border border-zinc-800 shadow-2xl overflow-hidden">
+          {/* Header Card */}
+          <div className="p-10 pb-6 text-center border-b border-zinc-800/50">
+            <Link to="/" className="inline-flex items-center gap-3 mb-4">
+              <div className="bg-rose-600 text-white w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-rose-600/30">
+                C+
+              </div>
+              <span className="text-white font-black text-2xl tracking-tighter uppercase">
+                Cinema Plus
+              </span>
+            </Link>
+
+            <p className="text-zinc-500 text-xs font-bold mt-2 tracking-widest uppercase">
+              Đăng Ký Tài Khoản Để Đặt Vé Xem Phim Online
+            </p>
+          </div>
+
+          <div className="p-10 pt-8">
+            <form onSubmit={handleRegister} className="space-y-6">
+              {/* Input Email */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Địa chỉ Email
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-600 group-focus-within:text-rose-500 transition-colors">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white placeholder-zinc-700 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none"
+                    required
+                  />
                 </div>
-            </div>
+              </div>
+
+              {/* Input Mật khẩu */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Mật khẩu
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-600 group-focus-within:text-rose-500 transition-colors">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white placeholder-zinc-700 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Nút Đăng ký */}
+              <button
+                type="submit"
+                className="w-full bg-white hover:bg-rose-600 text-zinc-950 hover:text-white font-black py-4 rounded-2xl transition-all duration-300 shadow-xl active:scale-[0.97] uppercase tracking-widest text-sm flex items-center justify-center gap-3 mt-4"
+              >
+                ĐĂNG KÝ NGAY
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </button>
+
+              {/* Link đăng nhập */}
+              <div className="text-center pt-4">
+                <p className="text-zinc-500 text-xs font-bold uppercase tracking-tight">
+                  Đã có tài khoản rồi?{" "}
+                  <Link
+                    to="/login"
+                    className="text-rose-500 hover:text-rose-400 transition-colors border-b border-rose-900/50 pb-0.5 ml-1"
+                  >
+                    Đăng nhập tại đây
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </div>
         </div>
-    );
+
+        {/* Footer bản quyền */}
+        <p className="text-center mt-10 text-zinc-700 text-[10px] font-bold uppercase tracking-[0.4em]">
+          © {new Date().getFullYear()} KHANHDTK PRODUCTION.
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default RegisterPage;
