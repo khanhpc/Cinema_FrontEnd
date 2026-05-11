@@ -286,6 +286,16 @@ const HistoryBookingPage = () => {
                       />
                     </div>
 
+                    {/* 2. MÃ TICKET DƯỚI QR (MỚI THÊM) */}
+                    <div className="bg-zinc-800/50 px-8 py-3 rounded-2xl border border-zinc-700 mb-8 text-center group">
+                      <p className="text-[9px] text-zinc-500 font-black uppercase tracking-[0.4em] mb-1 group-hover:text-rose-500 transition-colors">
+                        Mã số vé của bác
+                      </p>
+                      <p className="text-2xl font-mono font-black text-amber-400 tracking-[0.25em] drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]">
+                        {selectedInvoice.ticketCode}
+                      </p>
+                    </div>
+
                     <div className="text-center space-y-2 mb-10">
                       <p className="text-zinc-400 text-sm font-medium">
                         Quét mã này tại rạp để nhận vé bác nhé!

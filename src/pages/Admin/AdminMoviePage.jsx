@@ -301,7 +301,7 @@ const AdminMoviePage = () => {
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <span className="text-[10px] font-black text-zinc-700 group-hover:text-rose-500 transition-colors">
-                            #{movie.id}
+                            #{1 + localMovies.indexOf(movie)}
                           </span>
                           <span className="font-black text-white text-base group-hover:text-rose-500 transition-colors uppercase tracking-tight">
                             {movie.title}

@@ -242,7 +242,7 @@ const AdminShowtimePage = () => {
                 <div className="relative group">
                   <input
                     type="number"
-                    placeholder="85000"
+                    placeholder="50000"
                     className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white font-black focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all pr-12"
                     value={form.price}
                     onChange={(e) =>

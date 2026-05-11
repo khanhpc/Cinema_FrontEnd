@@ -6,6 +6,7 @@ import AdminCinemaPage from "./AdminCinemaPage";
 import AdminRoomPage from "./AdminRoomPage";
 import AdminComboBongNuoc from "./AdminComboBongNuoc";
 import Swal from "sweetalert2";
+import AdminStatisticsPage from "./AdminStatisticsPage";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("movies");
@@ -221,17 +222,7 @@ export default function AdminDashboard() {
             {activeTab === "cinemas" && <AdminCinemaPage />}
             {activeTab === "rooms" && <AdminRoomPage />}
             {activeTab === "combo-bongnuoc" && <AdminComboBongNuoc />}
-            {activeTab === "statistics" && (
-              <div className="h-[60vh] flex flex-col items-center justify-center bg-white/5 rounded-[40px] border border-white/5 border-dashed">
-                <div className="text-8xl mb-6">📊</div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-widest">
-                  Báo cáo doanh thu
-                </h3>
-                <p className="text-slate-500 font-bold mt-2">
-                  Đang xử lý dữ liệu từ các rạp, bác đợi cháu chút nhé!
-                </p>
-              </div>
-            )}
+            {activeTab === "statistics" && <AdminStatisticsPage />}
           </div>
         </main>
       </div>

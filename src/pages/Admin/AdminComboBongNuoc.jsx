@@ -130,7 +130,7 @@ const AdminComboBongNuoc = () => {
                 <div className="relative">
                   <input
                     type="number"
-                    placeholder="89000"
+                    placeholder="169000"
                     value={form.price}
                     onChange={(e) =>
                       setForm({ ...form, price: e.target.value })
