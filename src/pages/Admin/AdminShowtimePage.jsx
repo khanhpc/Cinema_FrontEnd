@@ -8,7 +8,7 @@ const AdminShowtimePage = () => {
   const [rooms, setRooms] = useState([]);
   const [showtimes, setShowtimes] = useState([]);
   const [expandedMovies, setExpandedMovies] = useState({});
-  const [expandedCinemas, setExpandedCinemas] = useState({}); // State mới để quản lý đóng mở Rạp
+  const [expandedCinemas, setExpandedCinemas] = useState({});
   const [form, setForm] = useState({
     movieId: "",
     roomId: "",
@@ -29,7 +29,6 @@ const AdminShowtimePage = () => {
     try {
       const response = await api.get("/admin/showtimes");
       const now = new Date();
-      // CHỈ HIỆN SUẤT CHIẾU SẮP TỚI
       const upcoming = response.data
         .filter((st) => new Date(st.startTime) >= now)
         .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
@@ -100,7 +99,6 @@ const AdminShowtimePage = () => {
     setExpandedCinemas((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // GOM NHÓM DỮ LIỆU 3 TẦNG: PHIM -> RẠP -> NGÀY
   const groupedData = showtimes.reduce((acc, st) => {
     const mId = st.movie.id;
     const cId = st.room.cinema.id;

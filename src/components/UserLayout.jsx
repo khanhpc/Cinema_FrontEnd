@@ -35,7 +35,6 @@ const UserLayout = () => {
     });
   };
 
-  // Logic kiểm tra Tab đang hoạt động
   const isHomeActive =
     location.pathname === "/" ||
     location.pathname.includes("/movie") ||

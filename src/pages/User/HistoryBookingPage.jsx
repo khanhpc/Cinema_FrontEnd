@@ -10,7 +10,6 @@ const HistoryBookingPage = () => {
   const [now, setNow] = useState(Date.now());
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  // STATE MỚI: Đóng/Mở lịch sử vé cũ
   const [showPastTickets, setShowPastTickets] = useState(false);
 
   const [availableCombos, setAvailableCombos] = useState([]);

@@ -25,7 +25,6 @@ const HomePage = () => {
 
   const fetchTopMovies = async () => {
     try {
-      // API LẤY TOP PHIM DOANH THU CỦA BÁC
       const response = await api.get("/public/movies/top-movies");
       setTopMovies(response.data);
     } catch (error) {
@@ -68,7 +67,6 @@ const HomePage = () => {
           {topMovies.map((movie, index) => {
             let position = index - activeIndex;
 
-            // Xử lý logic xoay vòng danh sách
             if (index === 0 && activeIndex === topMovies.length - 1)
               position = 1;
             if (index === topMovies.length - 1 && activeIndex === 0)

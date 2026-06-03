@@ -13,7 +13,6 @@ const RegisterPage = () => {
     try {
       await api.post("/public/register", { email, password });
 
-      // Hàm tạo độ trễ để người dùng kịp nhìn thấy thông báo thành công
       const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
       toast.success("Chào mừng bác! Đăng ký thành công rồi nhé.", {
@@ -24,7 +23,7 @@ const RegisterPage = () => {
         },
       });
 
-      await delay(1500); // Chờ 1.5 giây cho "ngầu"
+      await delay(1500);
       navigate("/login");
     } catch (error) {
       toast.error("Email này đã có người dùng rồi bác ơi!", {

@@ -63,9 +63,6 @@ const ShowtimePage = () => {
     );
   }
 
-  // ==========================================
-  // MÀN HÌNH 1: CHỌN CỤM RẠP
-  // ==========================================
   if (!selectedCinema) {
     return (
       <div className="min-h-screen bg-zinc-950 py-16 px-6 font-sans">
@@ -124,9 +121,6 @@ const ShowtimePage = () => {
     );
   }
 
-  // ==========================================
-  // MÀN HÌNH 2: CHỌN SUẤT CHIẾU
-  // ==========================================
   return (
     <div className="min-h-screen bg-zinc-950 py-12 px-4 sm:px-6 font-sans text-zinc-200">
       <div className="max-w-5xl mx-auto space-y-10">

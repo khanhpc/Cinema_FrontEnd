@@ -24,7 +24,6 @@ const MovieDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
-  // GIẢI MÃ TOKEN ĐỂ LẤY EMAIL ĐANG ĐĂNG NHẬP
   const userEmail = useMemo(() => {
     const token = localStorage.getItem("token");
     if (!token) return "";
@@ -64,13 +63,11 @@ const MovieDetailPage = () => {
     window.scrollTo(0, 0);
   }, [movieId, formKey]);
 
-  // TÌM BÌNH LUẬN CŨ CỦA NGƯỜI ĐANG ĐĂNG NHẬP
   const userOldComment = useMemo(() => {
     if (!userEmail || comments.length === 0) return null;
     return comments.find((c) => c.userEmail === userEmail) || null;
   }, [comments, userEmail]);
 
-  // ĐỒNG BỘ DỮ LIỆU CŨ VÀO STATE ĐỂ ĐIỀU KHIỂN FORM
   useEffect(() => {
     if (userOldComment) {
       setCommentContent(userOldComment.content);
@@ -81,7 +78,6 @@ const MovieDetailPage = () => {
     }
   }, [userOldComment]);
 
-  // TÍNH ĐIỂM TRUNG BÌNH THANG 10
   const averageRating = useMemo(() => {
     if (comments.length === 0) return 0;
     const total = comments.reduce((sum, comment) => sum + comment.rating, 0);
@@ -126,7 +122,6 @@ const MovieDetailPage = () => {
         rating,
       });
 
-      // Kích hoạt re-render đồng bộ lại danh sách
       setFormKey((prev) => prev + 1);
 
       toast.success(
@@ -262,7 +257,6 @@ const MovieDetailPage = () => {
 
         {/* ================= BÌNH LUẬN & ĐÁNH GIÁ THANG 10 ================= */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-          {/* KHUNG GỬI ĐÁNH GIÁ (TRAI) */}
           <div className="lg:col-span-1 bg-zinc-900/30 backdrop-blur-md p-6 md:p-8 rounded-[35px] border border-zinc-800 space-y-6">
             <div>
               <h2 className="text-xl font-black uppercase flex items-center gap-2">

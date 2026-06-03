@@ -11,7 +11,6 @@ const PaymentPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Lấy thông tin hóa đơn mới nhất (đã cộng tiền combo)
     api.get(`/user/invoices/${invoiceId}`).then((res) => {
       setInvoice(res.data);
       setLoading(false);
@@ -20,7 +19,6 @@ const PaymentPage = () => {
 
   const handleFakeSuccess = async () => {
     try {
-      // Gọi API Backend để đổi status thành CONFIRMED
       await api.post(`/user/invoices/${invoiceId}/confirm-payment`);
       Swal.fire({
         title: "Thanh toán thành công",
@@ -29,7 +27,7 @@ const PaymentPage = () => {
         confirmButtonColor: "#3085d6",
         confirmButtonText: "OK",
       });
-      navigate("/profile"); // Quay lại trang lịch sử để xem QR vé
+      navigate("/profile");
     } catch (e) {
       alert("Có lỗi khi xác nhận thanh toán!");
     }

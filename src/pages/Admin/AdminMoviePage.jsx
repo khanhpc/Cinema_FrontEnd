@@ -3,7 +3,7 @@ import api from "../../service/api";
 import Swal from "sweetalert2";
 
 const AdminMoviePage = () => {
-  // GIỮ NGUYÊN STATE
+
   const [localMovies, setLocalMovies] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [tmdbResults, setTmdbResults] = useState([]);
@@ -15,7 +15,6 @@ const AdminMoviePage = () => {
     fetchLocalMovies();
   }, []);
 
-  // GIỮ NGUYÊN LOGIC FETCH
   const fetchLocalMovies = async () => {
     try {
       const response = await api.get("/admin/movies");
@@ -25,7 +24,7 @@ const AdminMoviePage = () => {
     }
   };
 
-  // GIỮ NGUYÊN LOGIC SEARCH TMDB
+
   const searchTMDB = async (e) => {
     e.preventDefault();
     if (!searchQuery) return;
@@ -50,7 +49,6 @@ const AdminMoviePage = () => {
     }
   };
 
-  // GIỮ NGUYÊN LOGIC IMPORT
   const handleImportMovie = async (tmdbId) => {
     try {
       await api.post(`/admin/movies/import/${tmdbId}`);
@@ -77,7 +75,6 @@ const AdminMoviePage = () => {
     }
   };
 
-  // GIỮ NGUYÊN LOGIC DELETE
   const handleDelete = async (id) => {
     Swal.fire({
       title: "Xóa phim này?",

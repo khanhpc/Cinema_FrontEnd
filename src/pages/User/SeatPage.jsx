@@ -256,7 +256,6 @@ const SeatPage = () => {
   );
 };
 
-// Component phụ cho chú thích
 const LegendItem = ({ color, label, isBooked }) => (
   <div className="flex items-center gap-3">
     <div

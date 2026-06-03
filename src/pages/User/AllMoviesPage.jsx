@@ -20,7 +20,6 @@ const AllMoviesPage = () => {
     }
   };
 
-  // Lọc phim theo tên khi bác nhập vào ô tìm kiếm
   const filteredMovies = movies.filter((movie) =>
     movie.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );

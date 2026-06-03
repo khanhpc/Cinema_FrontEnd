@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 const AdminRoomPage = () => {
-  // GIỮ NGUYÊN TOÀN BỘ STATE CỦA BÁC
   const [rooms, setRooms] = useState([]);
   const [form, setForm] = useState({
     name: "",
@@ -20,7 +19,6 @@ const AdminRoomPage = () => {
     fetchCinemas();
   }, []);
 
-  // GIỮ NGUYÊN LOGIC FILTER
   const filteredRooms =
     activeTab === "all"
       ? rooms
@@ -44,7 +42,6 @@ const AdminRoomPage = () => {
     }
   };
 
-  // GIỮ NGUYÊN LOGIC TẠO PHÒNG VÀ GENERATE GHẾ
   const handleCreateRoom = async (e) => {
     e.preventDefault();
     try {
@@ -81,7 +78,6 @@ const AdminRoomPage = () => {
     }
   };
 
-  // NÂNG CẤP ALERT XÓA PHÒNG SANG SWAL
   const handleDeleteRoom = (id) => {
     Swal.fire({
       title: "Xác nhận xóa phòng?",
