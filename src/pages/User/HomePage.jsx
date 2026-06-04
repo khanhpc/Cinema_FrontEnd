@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../service/api";
 import { ChevronLeft, ChevronRight, Star, Flame, Award } from "lucide-react";
@@ -8,6 +8,8 @@ const HomePage = () => {
   const [topMovies, setTopMovies] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   useEffect(() => {
     fetchMovies();
@@ -40,6 +42,24 @@ const HomePage = () => {
     setActiveIndex((prev) => (prev === 0 ? topMovies.length - 1 : prev - 1));
   };
 
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const distance = touchStartX.current - touchEndX.current;
+
+    if (distance > 50) {
+      handleNext();
+    } else if (distance < -50) {
+      handlePrev();
+    }
+  };
+
   return (
     <div className="bg-zinc-950 min-h-screen text-white pb-24 font-sans overflow-x-hidden animate-fadeIn">
       {/* ================= PHẦN 1: TOP THỊNH HÀNH (CAROUSEL ĐẲNG CẤP) ================= */}
@@ -63,7 +83,12 @@ const HomePage = () => {
         </button>
 
         {/* CONTAINER KHUNG XOAY VÒNG */}
-        <div className="relative w-full max-w-[1200px] h-full flex items-center justify-center">
+        <div
+          className="relative w-full max-w-[1200px] h-full flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {topMovies.map((movie, index) => {
             let position = index - activeIndex;
 
