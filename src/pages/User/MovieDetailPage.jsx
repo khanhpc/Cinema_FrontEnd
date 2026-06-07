@@ -24,6 +24,12 @@ const MovieDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
+  const isMobile = useMemo(() => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+  }, []);
+
   const userEmail = useMemo(() => {
     const token = localStorage.getItem("token");
     if (!token) return "";
@@ -86,7 +92,10 @@ const MovieDetailPage = () => {
 
   const getDisplayName = (email) => {
     if (!email) return "Khách xem phim";
-    return email.split("@")[0];
+    const name = email.split("@")[0];
+    return (
+      name.charAt(0).toUpperCase() + "*".repeat(Math.max(name.length - 1, 1))
+    );
   };
 
   const formatCommentDate = (dateValue) => {
@@ -156,7 +165,6 @@ const MovieDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-24 relative overflow-hidden animate-fadeIn">
-      {/* NÚT QUAY LẠI */}
       <button
         onClick={() => navigate(-1)}
         className="fixed top-24 left-6 z-50 flex items-center gap-2 bg-zinc-900/60 backdrop-blur-xl px-5 py-2.5 rounded-2xl border border-white/5 hover:border-rose-500/50 hover:bg-zinc-900 transition-all text-xs font-black uppercase tracking-wider text-zinc-400 hover:text-white group"
@@ -169,7 +177,6 @@ const MovieDetailPage = () => {
       </button>
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-24 space-y-16 relative z-10">
-        {/* ================= TỔNG QUAN PHIM ================= */}
         <div className="flex flex-col lg:flex-row gap-12 items-center lg:items-start bg-zinc-900/20 backdrop-blur-xl p-8 md:p-12 rounded-[40px] border border-zinc-800 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-rose-600/5 rounded-full blur-[120px] pointer-events-none"></div>
 
@@ -234,7 +241,6 @@ const MovieDetailPage = () => {
           </div>
         </div>
 
-        {/* ================= TRAILER PHIM (ĐÃ FIX TỰ ĐỘNG CHẠY MUTE) ================= */}
         <div className="space-y-6">
           <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 pl-2">
             <Film className="text-rose-600" size={22} /> Trailer Chính Thức
@@ -244,8 +250,11 @@ const MovieDetailPage = () => {
               <div className="absolute top-0 left-0 w-1 h-full bg-rose-600 z-10"></div>
               <iframe
                 className="w-full h-full"
-                /* CHÁU ĐÃ THÊM &autoplay=1&mute=1 ĐỂ ÉP TRÌNH DUYỆT PHÁT LUÔN KHI VÀO TRANG */
-                src={`https://www.youtube.com/embed/${movie.trailerUrl}?autoplay=1&mute=1&rel=0&modestbranding=1`}
+                src={
+                  isMobile
+                    ? `https://www.youtube.com/embed/${movie.trailerUrl}?rel=0&modestbranding=1`
+                    : `https://www.youtube.com/embed/${movie.trailerUrl}?autoplay=1&mute=1&rel=0&modestbranding=1`
+                }
                 title={movie.title}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -255,7 +264,6 @@ const MovieDetailPage = () => {
           </div>
         </div>
 
-        {/* ================= BÌNH LUẬN & ĐÁNH GIÁ THANG 10 ================= */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
           <div className="lg:col-span-1 bg-zinc-900/30 backdrop-blur-md p-6 md:p-8 rounded-[35px] border border-zinc-800 space-y-6">
             <div>
@@ -271,7 +279,6 @@ const MovieDetailPage = () => {
             </div>
 
             <form onSubmit={handleSubmitComment} className="space-y-5">
-              {/* THANH CHỌN 10 SAO CAO CẤP */}
               <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">
@@ -303,7 +310,6 @@ const MovieDetailPage = () => {
                 </div>
               </div>
 
-              {/* Ô NHẬP NỘI DUNG */}
               <div className="space-y-1.5">
                 <textarea
                   value={commentContent}
@@ -337,7 +343,6 @@ const MovieDetailPage = () => {
             </form>
           </div>
 
-          {/* HIỂN THỊ DANH SÁCH BÌNH LUẬN (PHẢI) */}
           <div className="lg:col-span-2 space-y-4 max-h-[520px] overflow-y-auto pr-2 custom-scroll">
             {comments.length === 0 ? (
               <div className="text-center py-24 text-zinc-600 font-black uppercase tracking-widest border border-dashed border-zinc-800 rounded-[35px] bg-zinc-900/5 opacity-50 italic text-sm">
@@ -380,7 +385,6 @@ const MovieDetailPage = () => {
         </section>
       </div>
 
-      {/* BACKGROUND POSTER */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <img
           src={

@@ -14,7 +14,7 @@ const AdminMoviePage = () => {
   const [editForm, setEditForm] = useState({
     id: "",
     title: "",
-    duration: ""
+    duration: "",
   });
   const [isUpdating, setIsUpdating] = useState(false);
 
