@@ -177,13 +177,6 @@ const HomePage = () => {
                             / 10
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-xl text-rose-400 text-xs font-black">
-                          <MessageSquare
-                            size={12}
-                            className="fill-rose-500/10"
-                          />
-                          <span>{movie.commentCount || 0} bình luận</span>
-                        </div>
                         {movie.duration && (
                           <span className="text-[10px] bg-zinc-800 px-2.5 py-1 rounded-lg text-zinc-400 font-bold">
                             {movie.duration} phút
