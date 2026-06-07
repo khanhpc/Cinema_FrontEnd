@@ -25,20 +25,25 @@ const MovieDetailPage = () => {
   const [formKey, setFormKey] = useState(0);
 
   const isMobile = useMemo(() => {
+    if (typeof window === "undefined") return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent,
     );
   }, []);
 
   const userEmail = useMemo(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return "";
     try {
+      const token = localStorage.getItem("token");
+      if (!token || typeof token !== "string" || token.split(".").length !== 3)
+        return "";
+
       const base64Url = token.split(".")[1];
+      if (!base64Url) return "";
+
       const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const decodedPayload = window.atob(base64);
       const jsonPayload = decodeURIComponent(
-        window
-          .atob(base64)
+        decodedPayload
           .split("")
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
           .join(""),
@@ -46,7 +51,6 @@ const MovieDetailPage = () => {
       const decoded = JSON.parse(jsonPayload);
       return decoded.sub || decoded.email || "";
     } catch (error) {
-      console.error("Lỗi giải mã token:", error);
       return "";
     }
   }, []);
@@ -66,7 +70,13 @@ const MovieDetailPage = () => {
     };
 
     fetchMovieDetail();
-    window.scrollTo(0, 0);
+
+    // ĐƯA LỆNH CUỘN VÀO TIMEOUT ĐỂ TRÁNH CRASH TRÌNH DUYỆT DI ĐỘNG
+    const scrollTimeout = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }, 50);
+
+    return () => clearTimeout(scrollTimeout);
   }, [movieId, formKey]);
 
   const userOldComment = useMemo(() => {
@@ -137,9 +147,7 @@ const MovieDetailPage = () => {
         userOldComment
           ? "Đã cập nhật bình luận của bác!"
           : "Đã đăng tải đánh giá của bác thành công!",
-        {
-          style: { background: "#18181b", color: "#fff" },
-        },
+        { style: { background: "#18181b", color: "#fff" } },
       );
     } catch (error) {
       toast.error(
