@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import api from "../../service/api";
 import Swal from "sweetalert2";
-import { Search, Download, Trash2, Edit2, RefreshCw, X } from "lucide-react";
+import {
+  Search,
+  Download,
+  Trash2,
+  Edit2,
+  RefreshCw,
+  X,
+  Plus,
+} from "lucide-react";
 
 const AdminMoviePage = () => {
   const [localMovies, setLocalMovies] = useState([]);
@@ -10,13 +18,30 @@ const AdminMoviePage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isRatingSyncing, setIsRatingSyncing] = useState(false);
 
+  // CONTROL MODAL SỬA PHIM
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     id: "",
     title: "",
+    posterUrl: "",
+    trailerUrl: "",
     duration: "",
+    releaseDate: "",
+    description: "",
   });
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // CONTROL MODAL THÊM PHIM THỦ CÔNG (MỚI)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    title: "",
+    posterUrl: "",
+    trailerUrl: "",
+    duration: "",
+    releaseDate: "",
+    description: "",
+  });
+  const [isAdding, setIsAdding] = useState(false);
 
   const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -82,6 +107,61 @@ const AdminMoviePage = () => {
     }
   };
 
+  // HÀM XỬ LÝ THÊM PHIM THỦ CÔNG (BẮN LÊN API BÁC VỪA GỬI)
+  const handleAddMovieManual = async (e) => {
+    e.preventDefault();
+    setIsAdding(true);
+    try {
+      // ĐÓNG GÓI ĐÚNG ĐỊNH DẠNG MẢNG LIST<MOVIE> MÀ BACKEND YÊU CẦU
+      const payload = [
+        {
+          title: addForm.title,
+          posterUrl: addForm.posterUrl,
+          trailerUrl: addForm.trailerUrl || null,
+          duration: parseInt(addForm.duration),
+          releaseDate: addForm.releaseDate || null,
+          description: addForm.description,
+          avgRating: 0.0,
+          deleted: false,
+        },
+      ];
+
+      await api.post("/admin/movies/import", payload);
+
+      Swal.fire({
+        title: "Thành công!",
+        text: "Đã thêm bộ phim thủ công thành công.",
+        icon: "success",
+        background: "#18181b",
+        color: "#fff",
+        confirmButtonColor: "#e11d48",
+      });
+
+      // Reset form và reload dữ liệu
+      setAddForm({
+        title: "",
+        posterUrl: "",
+        trailerUrl: "",
+        duration: "",
+        releaseDate: "",
+        description: "",
+      });
+      setIsAddModalOpen(false);
+      fetchLocalMovies();
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        title: "Lỗi thêm phim",
+        text: "Hệ thống gặp sự cố, bác kiểm tra lại mạng hoặc backend nhé!",
+        icon: "error",
+        background: "#18181b",
+        color: "#fff",
+      });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const handleSyncAllRatings = async () => {
     if (localMovies.length === 0) return;
     setIsRatingSyncing(true);
@@ -117,9 +197,12 @@ const AdminMoviePage = () => {
   const openEditModal = (movie) => {
     setEditForm({
       id: movie.id,
-      title: movie.title,
-      duration: movie.duration,
-      avgRating: movie.avgRating || 0.0,
+      title: movie.title || "",
+      posterUrl: movie.posterUrl || "",
+      trailerUrl: movie.trailerUrl || "",
+      duration: movie.duration || "",
+      releaseDate: movie.releaseDate || "",
+      description: movie.description || "",
     });
     setIsEditModalOpen(true);
   };
@@ -130,8 +213,11 @@ const AdminMoviePage = () => {
     try {
       await api.put(`/admin/movies/update/${editForm.id}`, {
         title: editForm.title,
+        posterUrl: editForm.posterUrl,
+        trailerUrl: editForm.trailerUrl || null,
         duration: parseInt(editForm.duration),
-        avgRating: parseFloat(editForm.avgRating),
+        releaseDate: editForm.releaseDate || null,
+        description: editForm.description,
       });
       Swal.fire({
         title: "Thành công!",
@@ -198,18 +284,29 @@ const AdminMoviePage = () => {
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="bg-zinc-900/40 backdrop-blur-xl rounded-[40px] border border-zinc-800 shadow-2xl overflow-hidden">
           <div className="p-8 lg:p-10 bg-gradient-to-br from-rose-500/10 to-transparent border-b border-zinc-800/50">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="p-3 bg-rose-600 rounded-2xl shadow-lg shadow-rose-600/20">
-                <Search size={24} className="text-white" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-rose-600 rounded-2xl shadow-lg shadow-rose-600/20">
+                  <Search size={24} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
+                    Tìm kiếm trên TMDB
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1 opacity-60">
+                    Kết nối trực tiếp tới kho phim thế giới
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-                  Tìm kiếm trên TMDB
-                </h2>
-                <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1 opacity-60">
-                  Kết nối trực tiếp tới kho phim thế giới
-                </p>
-              </div>
+
+              {/* NÚT THÊM THỦ CÔNG CAO CẤP */}
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-rose-500 hover:text-rose-400 px-6 py-4 rounded-[20px] text-xs font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 shrink-0"
+              >
+                <Plus size={16} />
+                Thêm phim thủ công
+              </button>
             </div>
 
             <form
@@ -314,7 +411,7 @@ const AdminMoviePage = () => {
                 />
                 Đồng bộ Rating
               </button>
-              <span className="bg-zinc-800 text-rose-500 px-4 py-2 rounded-2xl text-[11px] font-black uppercase border border-zinc-700 tracking-wider">
+              <span className="bg-zinc-800 text-rose-500 px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-wider border border-zinc-700">
                 {localMovies.length} phim đang chiếu
               </span>
             </div>
@@ -383,12 +480,12 @@ const AdminMoviePage = () => {
 
                       <td className="px-8 py-6">
                         <span className="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-lg text-[10px] font-black font-mono border border-zinc-700">
-                          {movie.tmdbId}
+                          {movie.tmdbId || "Thủ công"}
                         </span>
                       </td>
 
                       <td className="px-8 py-6 text-zinc-500 font-bold text-sm tracking-tighter">
-                        {movie.releaseDate}
+                        {movie.releaseDate || "Chưa cập nhật"}
                       </td>
 
                       <td className="px-8 py-6">
@@ -424,16 +521,151 @@ const AdminMoviePage = () => {
         </div>
       </div>
 
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative animate-slideUp">
+      {/* 1. MODAL THÊM PHIM THỦ CÔNG (ĐÚNG ĐỊNH DẠNG MẢNG LIST GỬI BACKEND) */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto custom-scroll animate-fadeIn">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-[40px] shadow-2xl w-full max-w-lg my-8 overflow-hidden relative animate-slideUp">
             <div className="px-8 py-6 border-b border-zinc-800/60 bg-gradient-to-r from-rose-500/10 to-transparent flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                  Cập nhật phim
+                  Thêm phim thủ công mới
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-rose-600 transition-all flex items-center justify-center"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleAddMovieManual}
+              className="p-8 space-y-4 max-h-[70vh] overflow-y-auto pr-4 custom-scroll"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Tên bộ phim *
+                  </label>
+                  <input
+                    type="text"
+                    value={addForm.title}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, title: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                    placeholder="Nhập tên phim"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Thời lượng (Phút) *
+                  </label>
+                  <input
+                    type="number"
+                    value={addForm.duration}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, duration: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                    placeholder="Ví dụ: 120"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Đường dẫn Poster URL *
+                </label>
+                <input
+                  type="text"
+                  value={addForm.posterUrl}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, posterUrl: e.target.value })
+                  }
+                  className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                  placeholder="https://image.tmdb.org/..."
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Mã Trailer YouTube
+                  </label>
+                  <input
+                    type="text"
+                    value={addForm.trailerUrl}
+                    placeholder="Ví dụ: dQw4w9WgXcQ (hoặc để trống)"
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, trailerUrl: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Ngày phát hành
+                  </label>
+                  <input
+                    type="date"
+                    value={addForm.releaseDate}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, releaseDate: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all text-zinc-400"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Tóm tắt nội dung phim
+                </label>
+                <textarea
+                  value={addForm.description}
+                  rows={4}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, description: e.target.value })
+                  }
+                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all resize-none custom-scroll"
+                  placeholder="Nhập mô tả phim ngắn gọn..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isAdding}
+                className="w-full h-14 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl transition-all duration-300 shadow-xl shadow-rose-600/10 active:scale-[0.98] uppercase text-xs tracking-widest flex items-center justify-center gap-2 pt-2"
+              >
+                {isAdding ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  "Khởi tạo & Thêm Phim"
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. MODAL SỬA PHIM ĐANG CÓ SẴN */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto custom-scroll animate-fadeIn">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-[40px] shadow-2xl w-full max-w-lg my-8 overflow-hidden relative animate-slideUp">
+            <div className="px-8 py-6 border-b border-zinc-800/60 bg-gradient-to-r from-rose-500/10 to-transparent flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                  Cập nhật phim nâng cao
                 </h3>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">
-                  Sửa đổi thông số kho phim
+                  Chỉnh sửa toàn bộ thông số kho phim
                 </p>
               </div>
               <button
@@ -444,46 +676,110 @@ const AdminMoviePage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateMovie} className="p-8 space-y-5">
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest ml-1">
-                  Tên bộ phim
+            <form
+              onSubmit={handleUpdateMovie}
+              className="p-8 space-y-4 max-h-[70vh] overflow-y-auto pr-4 custom-scroll"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Tên bộ phim
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, title: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Thời lượng (Phút)
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.duration}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, duration: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Đường dẫn Poster URL
                 </label>
                 <input
                   type="text"
-                  value={editForm.title}
+                  value={editForm.posterUrl}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, title: e.target.value })
+                    setEditForm({ ...editForm, posterUrl: e.target.value })
                   }
-                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white focus:outline-none focus:border-rose-500 transition-all"
+                  className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-zinc-500 uppercase tracking-widest ml-1">
-                  Thời lượng (Phút)
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Mã/Đường dẫn Trailer YouTube
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.trailerUrl}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, trailerUrl: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                    Ngày phát hành
+                  </label>
+                  <input
+                    type="date"
+                    value={editForm.releaseDate}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, releaseDate: e.target.value })
+                    }
+                    className="w-full p-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all text-zinc-400"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">
+                  Tóm tắt nội dung phim
                 </label>
-                <input
-                  type="number"
-                  value={editForm.duration}
+                <textarea
+                  value={editForm.description}
+                  rows={4}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, duration: e.target.value })
+                    setEditForm({ ...editForm, description: e.target.value })
                   }
-                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl text-white focus:outline-none focus:border-rose-500 transition-all"
-                  required
+                  className="w-full p-4 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white text-sm focus:outline-none focus:border-rose-500 transition-all resize-none custom-scroll"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isUpdating}
-                className="w-full h-14 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-rose-600/10 active:scale-[0.98] uppercase text-xs tracking-widest flex items-center justify-center gap-2 mt-4"
+                className="w-full h-14 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl transition-all duration-300 shadow-xl shadow-rose-600/10 active:scale-[0.98] uppercase text-xs tracking-widest flex items-center justify-center gap-2 pt-2"
               >
                 {isUpdating ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
-                  "Lưu Thay Đổi"
+                  "Lưu Thay Đổi Hệ Thống"
                 )}
               </button>
             </form>

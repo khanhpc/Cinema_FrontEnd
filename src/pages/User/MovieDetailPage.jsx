@@ -20,6 +20,7 @@ const MovieDetailPage = () => {
   const [movie, setMovie] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentContent, setCommentContent] = useState("");
+  const [countComments, setCountComments] = useState(0);
   const [rating, setRating] = useState(10);
   const [submitting, setSubmitting] = useState(false);
 
@@ -29,7 +30,7 @@ const MovieDetailPage = () => {
   const isMobile = useMemo(() => {
     if (typeof window === "undefined") return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
   }, []);
 
@@ -48,7 +49,7 @@ const MovieDetailPage = () => {
         decodedPayload
           .split("")
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
+          .join(""),
       );
       const decoded = JSON.parse(jsonPayload);
       return decoded.sub || decoded.email || "";
@@ -65,7 +66,7 @@ const MovieDetailPage = () => {
       }
 
       const commentRes = await api.get(
-        `/public/movies/${movieId}/comments?page=${pageNumber}&size=20`
+        `/public/movies/${movieId}/comments?page=${pageNumber}&size=20`,
       );
 
       const newComments = commentRes.data.content || [];
@@ -84,9 +85,17 @@ const MovieDetailPage = () => {
     }
   };
 
+  const loadCountComments = async () => {
+    try {
+      const res = await api.get(`/public/movies/${movieId}/comments/count`);
+      setCountComments(res.data || 0);
+    } catch (error) {
+      console.error("Lỗi lấy số lượng bình luận:", error);
+    }
+  };
   useEffect(() => {
     loadMovieData(0, false);
-
+    loadCountComments();
     const scrollTimeout = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }, 50);
@@ -111,7 +120,10 @@ const MovieDetailPage = () => {
 
   const averageRating = useMemo(() => {
     if (comments.length === 0) return 0;
-    const total = comments.reduce((sum, comment) => sum + (comment?.rating || 0), 0);
+    const total = comments.reduce(
+      (sum, comment) => sum + (comment?.rating || 0),
+      0,
+    );
     return (total / comments.length).toFixed(1);
   }, [comments]);
 
@@ -166,12 +178,12 @@ const MovieDetailPage = () => {
         userOldComment
           ? "Đã cập nhật bình luận của bác!"
           : "Đã đăng tải đánh giá của bác thành công!",
-        { style: { background: "#18181b", color: "#fff" } }
+        { style: { background: "#18181b", color: "#fff" } },
       );
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-        "Chỉ tài khoản đã đặt vé và xem phim này mới được bình luận!"
+          "Chỉ tài khoản đã đặt vé và xem phim này mới được bình luận!",
       );
     } finally {
       setSubmitting(false);
@@ -232,12 +244,14 @@ const MovieDetailPage = () => {
                 </span>
                 <span className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-xl border border-white/5">
                   <Calendar size={14} className="text-rose-500" />{" "}
-                  {movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : ""}
+                  {movie.releaseDate
+                    ? new Date(movie.releaseDate).getFullYear()
+                    : ""}
                 </span>
                 {comments.length > 0 && (
                   <span className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-xl border border-white/5 text-amber-400 shadow-lg border-amber-500/10">
                     <Star size={14} className="fill-amber-400 text-amber-400" />{" "}
-                    {averageRating} / 10 ({comments.length} Đánh giá)
+                    {averageRating} / 10 ({countComments} Đánh giá)
                   </span>
                 )}
               </div>
