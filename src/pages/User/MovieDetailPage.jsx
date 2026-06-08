@@ -22,12 +22,14 @@ const MovieDetailPage = () => {
   const [commentContent, setCommentContent] = useState("");
   const [rating, setRating] = useState(10);
   const [submitting, setSubmitting] = useState(false);
-  const [formKey, setFormKey] = useState(0);
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
   const isMobile = useMemo(() => {
     if (typeof window === "undefined") return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent,
+      navigator.userAgent
     );
   }, []);
 
@@ -46,7 +48,7 @@ const MovieDetailPage = () => {
         decodedPayload
           .split("")
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(""),
+          .join("")
       );
       const decoded = JSON.parse(jsonPayload);
       return decoded.sub || decoded.email || "";
@@ -55,39 +57,52 @@ const MovieDetailPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchMovieDetail = async () => {
-      try {
-        const [movieRes, commentRes] = await Promise.all([
-          api.get(`/public/movies/${movieId}`),
-          api.get(`/public/movies/${movieId}/comments`),
-        ]);
+  const loadMovieData = async (pageNumber = 0, isAppend = false) => {
+    try {
+      if (pageNumber === 0) {
+        const movieRes = await api.get(`/public/movies/${movieId}`);
         setMovie(movieRes.data);
-        setComments(commentRes.data);
-      } catch (error) {
-        console.error("Lỗi lấy chi tiết phim:", error);
       }
-    };
 
-    fetchMovieDetail();
+      const commentRes = await api.get(
+        `/public/movies/${movieId}/comments?page=${pageNumber}&size=20`
+      );
 
-    // ĐƯA LỆNH CUỘN VÀO TIMEOUT ĐỂ TRÁNH CRASH TRÌNH DUYỆT DI ĐỘNG
+      const newComments = commentRes.data.content || [];
+      const totalPages = commentRes.data.totalPages || 0;
+
+      if (isAppend) {
+        setComments((prev) => [...prev, ...newComments]);
+      } else {
+        setComments(newComments);
+      }
+
+      setCurrentPage(pageNumber);
+      setHasMore(pageNumber < totalPages - 1);
+    } catch (error) {
+      console.error("Lỗi lấy dữ liệu:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadMovieData(0, false);
+
     const scrollTimeout = setTimeout(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }, 50);
 
     return () => clearTimeout(scrollTimeout);
-  }, [movieId, formKey]);
+  }, [movieId]);
 
   const userOldComment = useMemo(() => {
     if (!userEmail || comments.length === 0) return null;
-    return comments.find((c) => c.userEmail === userEmail) || null;
+    return comments.find((c) => c?.userEmail === userEmail) || null;
   }, [comments, userEmail]);
 
   useEffect(() => {
     if (userOldComment) {
-      setCommentContent(userOldComment.content);
-      setRating(userOldComment.rating);
+      setCommentContent(userOldComment.content || "");
+      setRating(userOldComment.rating || 10);
     } else {
       setCommentContent("");
       setRating(10);
@@ -96,9 +111,13 @@ const MovieDetailPage = () => {
 
   const averageRating = useMemo(() => {
     if (comments.length === 0) return 0;
-    const total = comments.reduce((sum, comment) => sum + comment.rating, 0);
+    const total = comments.reduce((sum, comment) => sum + (comment?.rating || 0), 0);
     return (total / comments.length).toFixed(1);
   }, [comments]);
+
+  const handleLoadMoreComments = () => {
+    loadMovieData(currentPage + 1, true);
+  };
 
   const getDisplayName = (email) => {
     if (!email) return "Khách xem phim";
@@ -141,18 +160,18 @@ const MovieDetailPage = () => {
         rating,
       });
 
-      setFormKey((prev) => prev + 1);
+      await loadMovieData(0, false);
 
       toast.success(
         userOldComment
           ? "Đã cập nhật bình luận của bác!"
           : "Đã đăng tải đánh giá của bác thành công!",
-        { style: { background: "#18181b", color: "#fff" } },
+        { style: { background: "#18181b", color: "#fff" } }
       );
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Chỉ tài khoản đã đặt vé và xem phim này mới được bình luận!",
+        "Chỉ tài khoản đã đặt vé và xem phim này mới được bình luận!"
       );
     } finally {
       setSubmitting(false);
@@ -191,7 +210,7 @@ const MovieDetailPage = () => {
           <div className="w-full max-w-[280px] shrink-0 relative group">
             <img
               src={
-                movie.posterUrl.startsWith("http")
+                movie.posterUrl && movie.posterUrl.startsWith("http")
                   ? movie.posterUrl
                   : `https://image.tmdb.org/t/p/w500${movie.posterUrl}`
               }
@@ -213,7 +232,7 @@ const MovieDetailPage = () => {
                 </span>
                 <span className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-xl border border-white/5">
                   <Calendar size={14} className="text-rose-500" />{" "}
-                  {new Date(movie.releaseDate).getFullYear()}
+                  {movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : ""}
                 </span>
                 {comments.length > 0 && (
                   <span className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-xl border border-white/5 text-amber-400 shadow-lg border-amber-500/10">
@@ -249,28 +268,36 @@ const MovieDetailPage = () => {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 pl-2">
-            <Film className="text-rose-600" size={22} /> Trailer Chính Thức
-          </h2>
-          <div className="flex justify-center">
-            <div className="w-full rounded-[35px] overflow-hidden shadow-2xl border border-zinc-800 bg-black aspect-video relative group">
-              <div className="absolute top-0 left-0 w-1 h-full bg-rose-600 z-10"></div>
-              <iframe
-                className="w-full h-full"
-                src={
-                  isMobile
-                    ? `https://www.youtube.com/embed/${movie.trailerUrl}?rel=0&modestbranding=1`
-                    : `https://www.youtube.com/embed/${movie.trailerUrl}?autoplay=1&mute=1&rel=0&modestbranding=1`
-                }
-                title={movie.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+        {movie.trailerUrl && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 pl-2">
+              <Film className="text-rose-600" size={22} /> Trailer Chính Thức
+            </h2>
+            <div className="flex justify-center">
+              <div className="w-full rounded-[35px] overflow-hidden shadow-2xl border border-zinc-800 bg-black aspect-video relative group">
+                <div className="absolute top-0 left-0 w-1 h-full bg-rose-600 z-10"></div>
+
+                <iframe
+                  className="w-full h-full block md:hidden"
+                  src={`https://www.youtube.com/embed/${movie.trailerUrl}?rel=0&modestbranding=1`}
+                  title={movie.title}
+                  frameBorder="0"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+
+                <iframe
+                  className="w-full h-full hidden md:block"
+                  src={`https://www.youtube.com/embed/${movie.trailerUrl}?autoplay=1&mute=1&rel=0&modestbranding=1`}
+                  title={movie.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
           <div className="lg:col-span-1 bg-zinc-900/30 backdrop-blur-md p-6 md:p-8 rounded-[35px] border border-zinc-800 space-y-6">
@@ -351,43 +378,59 @@ const MovieDetailPage = () => {
             </form>
           </div>
 
-          <div className="lg:col-span-2 space-y-4 max-h-[520px] overflow-y-auto pr-2 custom-scroll">
-            {comments.length === 0 ? (
-              <div className="text-center py-24 text-zinc-600 font-black uppercase tracking-widest border border-dashed border-zinc-800 rounded-[35px] bg-zinc-900/5 opacity-50 italic text-sm">
-                Chưa có bình luận nào từ người xem phim này bác ơi
-              </div>
-            ) : (
-              comments.map((comment) => (
-                <article
-                  key={comment.id}
-                  className="bg-zinc-900/20 backdrop-blur-md border border-zinc-900 hover:border-zinc-800 rounded-3xl p-6 space-y-4 transition-all relative overflow-hidden group"
-                >
-                  <div className="absolute top-0 left-0 w-1 h-0 bg-rose-600 group-hover:h-full transition-all duration-300"></div>
-                  <div className="flex flex-wrap items-center justify-between gap-3 pl-2">
-                    <div>
-                      <h3 className="font-black text-white text-base tracking-tight flex items-center gap-2">
-                        {getDisplayName(comment.userEmail)}
-                        {comment.userEmail === userEmail && (
-                          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-rose-600/20 text-rose-400 border border-rose-500/30 uppercase tracking-widest">
-                            Bạn
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">
-                        {formatCommentDate(comment.createdAt)}
-                      </p>
-                    </div>
+          <div className="lg:col-span-2 space-y-4">
+            <div className="max-h-[520px] overflow-y-auto pr-2 custom-scroll space-y-4">
+              {comments.length === 0 ? (
+                <div className="text-center py-24 text-zinc-600 font-black uppercase tracking-widest border border-dashed border-zinc-800 rounded-[35px] bg-zinc-900/5 opacity-50 italic text-sm">
+                  Chưa có bình luận nào từ người xem phim này bác ơi
+                </div>
+              ) : (
+                comments.map((comment) => {
+                  if (!comment) return null;
+                  return (
+                    <article
+                      key={comment.id}
+                      className="bg-zinc-900/20 backdrop-blur-md border border-zinc-900 hover:border-zinc-800 rounded-3xl p-6 space-y-4 transition-all relative overflow-hidden group"
+                    >
+                      <div className="absolute top-0 left-0 w-1 h-0 bg-rose-600 group-hover:h-full transition-all duration-300"></div>
+                      <div className="flex flex-wrap items-center justify-between gap-3 pl-2">
+                        <div>
+                          <h3 className="font-black text-white text-base tracking-tight flex items-center gap-2">
+                            {getDisplayName(comment.userEmail)}
+                            {comment.userEmail === userEmail && (
+                              <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-rose-600/20 text-rose-400 border border-rose-500/30 uppercase tracking-widest">
+                                Bạn
+                              </span>
+                            )}
+                          </h3>
+                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">
+                            {formatCommentDate(comment.createdAt)}
+                          </p>
+                        </div>
 
-                    <div className="flex items-center gap-1 bg-amber-500/5 px-3 py-1.5 rounded-xl border border-amber-500/15 text-amber-400 text-xs font-black">
-                      <Star size={12} className="fill-amber-400" />
-                      <span>{comment.rating} / 10</span>
-                    </div>
-                  </div>
-                  <p className="text-zinc-400 leading-relaxed text-sm font-medium pl-2">
-                    {comment.content}
-                  </p>
-                </article>
-              ))
+                        <div className="flex items-center gap-1 bg-amber-500/5 px-3 py-1.5 rounded-xl border border-amber-500/15 text-amber-400 text-xs font-black">
+                          <Star size={12} className="fill-amber-400" />
+                          <span>{comment.rating} / 10</span>
+                        </div>
+                      </div>
+                      <p className="text-zinc-400 leading-relaxed text-sm font-medium pl-2">
+                        {comment.content}
+                      </p>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+
+            {hasMore && (
+              <div className="pt-4 flex justify-center">
+                <button
+                  onClick={handleLoadMoreComments}
+                  className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-md"
+                >
+                  Xem thêm bình luận
+                </button>
+              </div>
             )}
           </div>
         </section>
@@ -396,7 +439,7 @@ const MovieDetailPage = () => {
       <div className="fixed inset-0 pointer-events-none z-0">
         <img
           src={
-            movie.posterUrl.startsWith("http")
+            movie.posterUrl && movie.posterUrl.startsWith("http")
               ? movie.posterUrl
               : `https://image.tmdb.org/t/p/original${movie.posterUrl}`
           }
