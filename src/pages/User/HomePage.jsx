@@ -131,31 +131,31 @@ const HomePage = () => {
                 }}
               >
                 <div
-                  className={`absolute -left-12 -top-6 text-[130px] font-black italic select-none transition-all duration-500 z-0 ${
-                    isActive
-                      ? "text-amber-500 filter drop-shadow-[4px_4px_0px_rgba(0,0,0,0.8)] scale-110"
-                      : "text-white/5"
-                  }`}
+                  className={`absolute -left-12 -top-6 text-[130px] font-black italic select-none transition-all duration-500 z-0 ${isActive
+                    ? "text-amber-500 filter drop-shadow-[4px_4px_0px_rgba(0,0,0,0.8)] scale-110"
+                    : "text-white/5"
+                    }`}
                   style={{ WebkitTextStroke: isActive ? "2px #000" : "none" }}
                 >
                   {index + 1}
                 </div>
 
                 <div
-                  className={`w-full h-full rounded-[35px] overflow-hidden relative transition-all duration-500 bg-zinc-900 z-10 select-none ${
-                    isActive
-                      ? "shadow-[0_30px_60px_-15px_rgba(245,197,24,0.3)] border-2 border-amber-500 scale-100"
-                      : "shadow-2xl border border-white/5 scale-95 pointer-events-none"
-                  }`}
+                  className={`w-full h-full rounded-[35px] overflow-hidden relative transition-all duration-500 bg-zinc-900 z-10 select-none ${isActive
+                    ? "shadow-[0_30px_60px_-15px_rgba(245,197,24,0.3)] border-2 border-amber-500 scale-100"
+                    : "shadow-2xl border border-white/5 scale-95 pointer-events-none"
+                    }`}
                 >
                   <img
                     src={
                       movie.posterUrl
-                        ? `https://image.tmdb.org/t/p/w500${movie.posterUrl}`
+                        ? (movie.posterUrl.startsWith("http")
+                          ? movie.posterUrl
+                          : `https://image.tmdb.org/t/p/w500${movie.posterUrl}`)
                         : "https://via.placeholder.com/400x600"
                     }
                     alt={movie.title}
-                    className="w-full h-full object-cover pointer-events-none"
+                    className="w-full h-full object-cover pointer-events-none aspect-[2/3]"
                   />
 
                   {isActive && (
@@ -231,10 +231,17 @@ const HomePage = () => {
             className="bg-zinc-900/30 border border-zinc-900 rounded-[30px] overflow-hidden hover:border-rose-600/50 hover:-translate-y-3 transition-all duration-400 cursor-pointer group shadow-xl flex flex-col"
           >
             <div className="w-full h-[360px] overflow-hidden relative">
+              {/* ĐÃ NÂNG CẤP CHECK KHÁNG LẶP LINK Ở ĐÂY CHO BÁC */}
               <img
-                src={`https://image.tmdb.org/t/p/w500${movie.posterUrl}`}
+                src={
+                  movie.posterUrl
+                    ? (movie.posterUrl.startsWith("http")
+                      ? movie.posterUrl
+                      : `https://image.tmdb.org/t/p/w500${movie.posterUrl}`)
+                    : "https://via.placeholder.com/400x600"
+                }
                 alt={movie.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 aspect-[2/3]"
               />
               <div className="absolute top-4 right-4 flex flex-col gap-1.5 items-end">
                 <div className="bg-zinc-950/80 backdrop-blur-md px-2.5 py-1 rounded-xl text-amber-400 text-[10px] font-black flex items-center gap-1 border border-white/5 shadow-md">

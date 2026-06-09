@@ -153,7 +153,9 @@ const AllMoviesPage = () => {
                 <img
                   src={
                     movie.posterUrl
-                      ? `https://image.tmdb.org/t/p/w400${movie.posterUrl}`
+                      ? (movie.posterUrl.startsWith("http")
+                        ? movie.posterUrl
+                        : `https://image.tmdb.org/t/p/w500${movie.posterUrl}`)
                       : "https://via.placeholder.com/400x600"
                   }
                   alt={movie.title}
