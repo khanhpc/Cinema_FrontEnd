@@ -16,30 +16,51 @@ const HomePage = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
 
+  const [commentCounts, setCommentCounts] = useState({});
+
   const touchStartX = useRef(0);
   const isSwiping = useRef(false);
 
   useEffect(() => {
-    fetchMovies();
-    fetchTopMovies();
+    fetchMoviesAndTop();
   }, []);
 
-  const fetchMovies = async () => {
+  const fetchMoviesAndTop = async () => {
     try {
-      const response = await api.get("/public/movies");
-      setMovies(response.data);
+      const [moviesRes, topRes] = await Promise.all([
+        api.get("/public/movies"),
+        api.get("/public/movies/top-movies")
+      ]);
+
+      const localMovies = moviesRes.data || [];
+      const popularMovies = topRes.data || [];
+
+      setMovies(localMovies);
+      setTopMovies(popularMovies);
+
+      const allMovieIds = Array.from(
+        new Set([...localMovies.map(m => m.id), ...popularMovies.map(m => m.id)])
+      );
+
+      loadAllCommentCounts(allMovieIds);
+
     } catch (error) {
       console.error("Lỗi lấy danh sách phim:", error);
     }
   };
 
-  const fetchTopMovies = async () => {
-    try {
-      const response = await api.get("/public/movies/top-movies");
-      setTopMovies(response.data);
-    } catch (error) {
-      console.error("Lỗi lấy top movies:", error);
-    }
+  const loadAllCommentCounts = async (movieIds) => {
+    movieIds.forEach(async (id) => {
+      try {
+        const res = await api.get(`/public/movies/${id}/comments/count`);
+        setCommentCounts((prev) => ({
+          ...prev,
+          [id]: res.data || 0
+        }));
+      } catch (error) {
+        console.error(`Lỗi đếm comment cho phim ${id}:`, error);
+      }
+    });
   };
 
   const handleNext = () => {
@@ -231,7 +252,6 @@ const HomePage = () => {
             className="bg-zinc-900/30 border border-zinc-900 rounded-[30px] overflow-hidden hover:border-rose-600/50 hover:-translate-y-3 transition-all duration-400 cursor-pointer group shadow-xl flex flex-col"
           >
             <div className="w-full h-[360px] overflow-hidden relative">
-              {/* ĐÃ NÂNG CẤP CHECK KHÁNG LẶP LINK Ở ĐÂY CHO BÁC */}
               <img
                 src={
                   movie.posterUrl
@@ -248,9 +268,11 @@ const HomePage = () => {
                   <Star size={10} className="fill-amber-400 text-amber-400" />
                   {movie.avgRating ? movie.avgRating.toFixed(1) : "10.0"}
                 </div>
+
+                {/* TRÍCH XUẤT SỐ LƯỢNG COMMENT CHUẨN TỪ SỔ CÁI THEO ID PHIM */}
                 <div className="bg-zinc-950/80 backdrop-blur-md px-2 py-1 rounded-xl text-zinc-400 text-[9px] font-black flex items-center gap-1 border border-white/5 shadow-md">
                   <MessageSquare size={9} />
-                  {movie.commentCount || 0}
+                  {commentCounts[movie.id] || 0}
                 </div>
               </div>
             </div>

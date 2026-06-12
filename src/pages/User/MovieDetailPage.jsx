@@ -93,6 +93,7 @@ const MovieDetailPage = () => {
       console.error("Lỗi lấy số lượng bình luận:", error);
     }
   };
+
   useEffect(() => {
     loadMovieData(0, false);
     loadCountComments();
@@ -117,15 +118,6 @@ const MovieDetailPage = () => {
       setRating(10);
     }
   }, [userOldComment]);
-
-  const averageRating = useMemo(() => {
-    if (comments.length === 0) return 0;
-    const total = comments.reduce(
-      (sum, comment) => sum + (comment?.rating || 0),
-      0,
-    );
-    return (total / comments.length).toFixed(1);
-  }, [comments]);
 
   const handleLoadMoreComments = () => {
     loadMovieData(currentPage + 1, true);
@@ -172,7 +164,9 @@ const MovieDetailPage = () => {
         rating,
       });
 
+      // UPDATE ĐỒNG THỜI CẢ LIST COMMENT LẪN CON SỐ ĐẾM TỔNG TẠI ĐÂY
       await loadMovieData(0, false);
+      await loadCountComments();
 
       toast.success(
         userOldComment
@@ -183,7 +177,7 @@ const MovieDetailPage = () => {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Chỉ tài khoản đã đặt vé và xem phim này mới được bình luận!",
+        "Chỉ tài khoản đã đặt vé và xem phim này mới được bình luận!",
       );
     } finally {
       setSubmitting(false);
@@ -251,7 +245,9 @@ const MovieDetailPage = () => {
                 {comments.length > 0 && (
                   <span className="flex items-center gap-2 bg-zinc-900/80 px-4 py-2 rounded-xl border border-white/5 text-amber-400 shadow-lg border-amber-500/10">
                     <Star size={14} className="fill-amber-400 text-amber-400" />{" "}
-                    {averageRating} / 10 ({countComments} Đánh giá)
+                    {movie.avgRating
+                      ? movie.avgRating.toFixed(1)
+                      : "10.0"}{" "} / 10 ({countComments} Đánh giá)
                   </span>
                 )}
               </div>
